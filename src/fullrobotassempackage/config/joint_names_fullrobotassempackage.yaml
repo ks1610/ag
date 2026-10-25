@@ -1,1 +1,1 @@
-controller_joint_names: ['armleft', 'wheelright', 'wheelleft', 'upperbody', 'shoulderright', 'armright', 'shoulderleft', 'armleft', ]
+controller_joint_names: ['', 'rightwheel', 'wheelleft', 'halfbody', 'rightshoulder', 'leftshoulder', 'leftarm', 'rightarm', ]

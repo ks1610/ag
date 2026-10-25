@@ -8,17 +8,17 @@
     name="base_link">
     <inertial>
       <origin
-        xyz="0.13888 0.011119 0.26326"
+        xyz="-0.18169 0.23656 -0.026535"
         rpy="0 0 0" />
       <mass
-        value="1.5842" />
+        value="1.6424" />
       <inertia
-        ixx="0.01892"
-        ixy="-4.3413E-05"
-        ixz="0.00017227"
-        iyy="0.02233"
-        iyz="0.00034519"
-        izz="0.018653" />
+        ixx="0.018554"
+        ixy="2.0429E-06"
+        ixz="2.665E-05"
+        iyy="0.019015"
+        iyz="6.9705E-07"
+        izz="0.022376" />
     </inertial>
     <visual>
       <origin
@@ -44,39 +44,18 @@
       </geometry>
     </collision>
   </link>
-  <joint
-    name="armleft"
-    type="revolute">
-    <origin
-      xyz="0.064738 -0.28037 0.30389"
-      rpy="-3.109 0.16425 1.1403" />
-    <parent
-      link="base_link" />
-    <child
-      link="leftarm" />
-    <axis
-      xyz="0.00033866 1 0.0013575" />
-    <limit
-      lower="0"
-      upper="3.1416"
-      effort="1.1"
-      velocity="7.5" />
-    <dynamics
-      damping="0.05"
-      friction="0.05" />
-  </joint>
   <link
-    name="rightwheel">
+    name="wheel_right_link">
     <inertial>
       <origin
-        xyz="0.23239 -0.13295 0.15496"
+        xyz="0.23239 0.13295 -0.15496"
         rpy="0 0 0" />
       <mass
         value="0.05056" />
       <inertia
         ixx="1.4651E-05"
-        ixy="-4.8342E-09"
-        ixz="-4.7127E-10"
+        ixy="4.8342E-09"
+        ixz="4.7127E-10"
         iyy="2.5069E-05"
         iyz="2.331E-08"
         izz="1.4653E-05" />
@@ -87,7 +66,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/rightwheel.STL" />
+          filename="package://fullrobotassempackage/meshes/wheel_right_link.STL" />
       </geometry>
       <material
         name="">
@@ -101,20 +80,20 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/rightwheel.STL" />
+          filename="package://fullrobotassempackage/meshes/wheel_right_link.STL" />
       </geometry>
     </collision>
   </link>
   <joint
-    name="wheelright"
+    name="rightwheel"
     type="continuous">
     <origin
-      xyz="0.25099 0.11429 -0.29423"
-      rpy="-0.032213 0.080117 -2.0092" />
+      xyz="0.18581 0.18863 0.30417"
+      rpy="0 0 -3.1416" />
     <parent
       link="base_link" />
     <child
-      link="rightwheel" />
+      link="wheel_right_link" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -127,20 +106,20 @@
       friction="0.1" />
   </joint>
   <link
-    name="leftwheel">
+    name="wheel_left_link">
     <inertial>
       <origin
-        xyz="0.232392843580977 0.228763871117636 0.154962063355441"
+        xyz="-0.23239 0.22876 -0.15496"
         rpy="0 0 0" />
       <mass
-        value="0.0505597319639277" />
+        value="0.05056" />
       <inertia
-        ixx="1.46506419559056E-05"
-        ixy="2.05141133776326E-09"
-        ixz="-2.03481933348824E-10"
-        iyy="2.50688321112325E-05"
-        iyz="-2.37171117048615E-08"
-        izz="1.46529768842894E-05" />
+        ixx="1.4651E-05"
+        ixy="-2.0514E-09"
+        ixz="-2.0348E-10"
+        iyy="2.5069E-05"
+        iyz="2.3717E-08"
+        izz="1.4653E-05" />
     </inertial>
     <visual>
       <origin
@@ -148,68 +127,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/leftwheel.STL" />
-      </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassempackage/meshes/leftwheel.STL" />
-      </geometry>
-    </collision>
-  </link>
-  <joint
-    name="wheelleft"
-    type="continuous">
-    <origin
-      xyz="0.25099 0.11429 -0.29423"
-      rpy="-0.032213 0.080117 -2.0092" />
-    <parent
-      link="base_link" />
-    <child
-      link="leftwheel" />
-    <axis
-      xyz="0 0 1" />
-    <limit
-      lower="0"
-      upper="0"
-      effort="2"
-      velocity="11.519" />
-    <dynamics
-      damping="0.1"
-      friction="0.1" />
-  </joint>
-  <link
-    name="halfbody">
-    <inertial>
-      <origin
-        xyz="0.082199 0.51274 -0.24333"
-        rpy="0 0 0" />
-      <mass
-        value="0.94658" />
-      <inertia
-        ixx="0.0033125"
-        ixy="-2.197E-11"
-        ixz="-1.3214E-10"
-        iyy="0.015568"
-        iyz="-0.00045297"
-        izz="0.014172" />
-    </inertial>
-    <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassempackage/meshes/halfbody.STL" />
+          filename="package://fullrobotassempackage/meshes/wheel_left_link.STL" />
       </geometry>
       <material
         name="">
@@ -223,22 +141,83 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/halfbody.STL" />
+          filename="package://fullrobotassempackage/meshes/wheel_left_link.STL" />
       </geometry>
     </collision>
   </link>
   <joint
-    name="upperbody"
-    type="prismatic">
+    name="wheelleft"
+    type="continuous">
     <origin
-      xyz="0.22736 0.1021 0.26713"
-      rpy="-3.0614 0.032109 -0.43587" />
+      xyz="0.18581 0.18863 0.30417"
+      rpy="0 0 0" />
     <parent
       link="base_link" />
     <child
-      link="halfbody" />
+      link="wheel_left_link" />
     <axis
-      xyz="0 0 1" />
+      xyz="0 1 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="2"
+      velocity="11.519" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="upper_body">
+    <inertial>
+      <origin
+        xyz="0.51167 0.082198 0.24248"
+        rpy="0 0 0" />
+      <mass
+        value="1.0125" />
+      <inertia
+        ixx="0.015585"
+        ixy="1.1113E-11"
+        ixz="0.00045297"
+        iyy="0.0033239"
+        iyz="-8.855E-10"
+        izz="0.014182" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://fullrobotassempackage/meshes/upper_body.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://fullrobotassempackage/meshes/upper_body.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="halfbody"
+    type="prismatic">
+    <origin
+      xyz="0.20973 0.15434 -0.25626"
+      rpy="3.1416 0 3.1416" />
+    <parent
+      link="base_link" />
+    <child
+      link="upper_body" />
+    <axis
+      xyz="1 0 0" />
     <limit
       lower="0"
       upper="0.5"
@@ -249,20 +228,20 @@
       friction="0.1" />
   </joint>
   <link
-    name="rightshoulder">
+    name="right_shoulder">
     <inertial>
       <origin
-        xyz="0.047508 0.1404 -0.12232"
+        xyz="0.045612 0.14196 -0.12092"
         rpy="0 0 0" />
       <mass
-        value="0.39518" />
+        value="0.42814" />
       <inertia
-        ixx="0.00037814"
-        ixy="-1.8967E-06"
-        ixz="5.5664E-06"
-        iyy="0.00037267"
-        iyz="-7.6019E-06"
-        izz="0.00039906" />
+        ixx="0.00038339"
+        ixy="-2.0333E-06"
+        ixz="6.1751E-06"
+        iyy="0.00038112"
+        iyz="-7.5666E-06"
+        izz="0.00040447" />
     </inertial>
     <visual>
       <origin
@@ -270,7 +249,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/rightshoulder.STL" />
+          filename="package://fullrobotassempackage/meshes/right_shoulder.STL" />
       </geometry>
       <material
         name="">
@@ -284,20 +263,20 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/rightshoulder.STL" />
+          filename="package://fullrobotassempackage/meshes/right_shoulder.STL" />
       </geometry>
     </collision>
   </link>
   <joint
-    name="shoulderright"
+    name="rightshoulder"
     type="revolute">
     <origin
-      xyz="0.051703 -0.31969 0.34781"
-      rpy="3.1094 0.080117 -2.0092" />
+      xyz="-0.23881 0.17058 -0.37379"
+      rpy="0 -0.021027 -3.1416" />
     <parent
       link="base_link" />
     <child
-      link="rightshoulder" />
+      link="right_shoulder" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -310,20 +289,81 @@
       friction="0.05" />
   </joint>
   <link
-    name="rightarm">
+    name="left_shoulder">
     <inertial>
       <origin
-        xyz="0.037089 0.3501 0.050634"
+        xyz="-0.048271 0.27368 -0.12016"
+        rpy="0 0 0" />
+      <mass
+        value="0.42814" />
+      <inertia
+        ixx="0.0003818"
+        ixy="4.8393E-07"
+        ixz="-1.4206E-06"
+        iyy="0.00038112"
+        iyz="-7.8201E-06"
+        izz="0.00040606" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://fullrobotassempackage/meshes/left_shoulder.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://fullrobotassempackage/meshes/left_shoulder.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="leftshoulder"
+    type="revolute">
+    <origin
+      xyz="-0.23881 0.17058 -0.37379"
+      rpy="0.0013991 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="left_shoulder" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="0"
+      upper="3.1416"
+      effort="1.1"
+      velocity="7.5" />
+    <dynamics
+      damping="0.05"
+      friction="0.05" />
+  </joint>
+  <link
+    name="left_arm">
+    <inertial>
+      <origin
+        xyz="-0.14381 0.29124 -0.0052475"
         rpy="0 0 0" />
       <mass
         value="0.44382" />
       <inertia
-        ixx="0.00031781"
-        ixy="0.00015273"
-        ixz="-0.00013066"
-        iyy="0.0010012"
-        iyz="1.6114E-05"
-        izz="0.00087585" />
+        ixx="0.00056547"
+        ixy="-0.00021978"
+        ixz="0.0002721"
+        iyy="0.00093155"
+        iyz="0.00013416"
+        izz="0.00069783" />
     </inertial>
     <visual>
       <origin
@@ -331,7 +371,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/rightarm.STL" />
+          filename="package://fullrobotassempackage/meshes/left_arm.STL" />
       </geometry>
       <material
         name="">
@@ -345,22 +385,22 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/rightarm.STL" />
+          filename="package://fullrobotassempackage/meshes/left_arm.STL" />
       </geometry>
     </collision>
   </link>
   <joint
-    name="armright"
+    name="leftarm"
     type="revolute">
     <origin
-      xyz="0.18622 -0.47902 0.38891"
-      rpy="3.1081 0.021347 -2.0073" />
+      xyz="-0.20132 0.16721 -0.32659"
+      rpy="0 -0.24449 0" />
     <parent
       link="base_link" />
     <child
-      link="rightarm" />
+      link="left_arm" />
     <axis
-      xyz="8.2222E-05 -1 -0.0013967" />
+      xyz="0 0 1" />
     <limit
       lower="0"
       upper="3.1416"
@@ -371,20 +411,20 @@
       friction="0.05" />
   </joint>
   <link
-    name="leftshoulder">
+    name="right_arm">
     <inertial>
       <origin
-        xyz="0.048085 -0.27229 -0.12223"
+        xyz="0.03864 -0.041522 -0.040664"
         rpy="0 0 0" />
       <mass
-        value="0.39518" />
+        value="0.44382" />
       <inertia
-        ixx="0.00037683"
-        ixy="4.6226E-07"
-        ixz="1.3893E-06"
-        iyy="0.00037269"
-        iyz="7.8602E-06"
-        izz="0.00040034" />
+        ixx="0.00035115"
+        ixy="-6.4015E-06"
+        ixz="0.00022729"
+        iyy="0.0010344"
+        iyz="8.5952E-06"
+        izz="0.00080929" />
     </inertial>
     <visual>
       <origin
@@ -392,7 +432,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/leftshoulder.STL" />
+          filename="package://fullrobotassempackage/meshes/right_arm.STL" />
       </geometry>
       <material
         name="">
@@ -406,22 +446,22 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://fullrobotassempackage/meshes/leftshoulder.STL" />
+          filename="package://fullrobotassempackage/meshes/right_arm.STL" />
       </geometry>
     </collision>
   </link>
   <joint
-    name="shoulderleft"
+    name="rightarm"
     type="revolute">
     <origin
-      xyz="0.051703 -0.31969 0.34781"
-      rpy="3.1094 0.080117 -2.0092" />
+      xyz="-0.39947 0.057493 -0.34727"
+      rpy="0.057249 -0.23782 -0.23863" />
     <parent
       link="base_link" />
     <child
-      link="leftshoulder" />
+      link="right_arm" />
     <axis
-      xyz="0 1 -0.0013991" />
+      xyz="0 0 1" />
     <limit
       lower="0"
       upper="3.1416"
@@ -431,65 +471,4 @@
       damping="0.05"
       friction="0.05" />
   </joint>
-  <link
-    name="leftarm">
-    <inertial>
-      <origin
-        xyz="0.064738 -0.28037 0.30389"
-        rpy="0 0.16425 1.1403" />
-      <mass
-        value="0" />
-      <inertia
-        ixx="0"
-        ixy="0"
-        ixz="0"
-        iyy="0"
-        iyz="0"
-        izz="0" />
-    </inertial>
-    <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassempackage/meshes/leftarm.STL" />
-      </geometry>
-      <material
-        name="">
-        <color
-          rgba="1 1 1 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassempackage/meshes/leftarm.STL" />
-      </geometry>
-    </collision>
-  </link>
-  <!-- <joint
-    name="armleft_1"
-    type="revolute">
-    <origin
-      xyz="0.064738 -0.28037 0.30389"
-      rpy="-3.109 0.16425 1.1403" />
-    <parent
-      link="base_link" />
-    <child
-      link="leftarm" />
-    <axis
-      xyz="0.00033866 1 0.0013575" />
-    <limit
-      lower="0"
-      upper="3.1416"
-      effort="1.1"
-      velocity="7.5" />
-    <dynamics
-      damping="0.05"
-      friction="0.05" />
-  </joint> -->
 </robot>

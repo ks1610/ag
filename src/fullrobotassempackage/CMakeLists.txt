@@ -1,19 +1,14 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 2.8.3)
+
 project(fullrobotassempackage)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+find_package(catkin REQUIRED)
 
-find_package(ament_cmake REQUIRED)
+catkin_package()
 
-# Cài đặt các thư mục cần thiết
-install(
-  DIRECTORY
-    launch
-    meshes
-    urdf
-  DESTINATION share/${PROJECT_NAME}
-)
+find_package(roslaunch)
 
-ament_package()
+foreach(dir config launch meshes urdf)
+	install(DIRECTORY ${dir}/
+		DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach(dir)
