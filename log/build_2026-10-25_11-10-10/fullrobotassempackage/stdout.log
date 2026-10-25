@@ -1,0 +1,49 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/khanhtrinh/trinh/ag/build/fullrobotassempackage
+-- Install configuration: ""
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/launch
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/launch/display.launch
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/launch/gazebo.launch
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/launch/display.launch.py
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/leftshoulder.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/leftwheel.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/rightshoulder.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/base_link.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/halfbody.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/leftarm.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/rightwheel.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/meshes/rightarm.STL
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/urdf
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/urdf/fullrobotassempackage.csv
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/urdf/fullrobotassempackage.urdf
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/ament_index/resource_index/package_run_dependencies/fullrobotassempackage
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/ament_index/resource_index/parent_prefix_path/fullrobotassempackage
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/environment/ament_prefix_path.sh
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/environment/ament_prefix_path.dsv
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/environment/path.sh
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/environment/path.dsv
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/local_setup.bash
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/local_setup.sh
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/local_setup.zsh
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/local_setup.dsv
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/package.dsv
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/ament_index/resource_index/packages/fullrobotassempackage
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/cmake/fullrobotassempackageConfig.cmake
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/cmake/fullrobotassempackageConfig-version.cmake
+-- Installing: /home/khanhtrinh/trinh/ag/install/fullrobotassempackage/share/fullrobotassempackage/package.xml
