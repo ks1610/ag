@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-project(fullrobotassempackage)
+project(fullrobotassem)
 
 find_package(catkin REQUIRED)
 
