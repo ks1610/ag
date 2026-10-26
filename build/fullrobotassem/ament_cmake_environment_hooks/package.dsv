@@ -1,0 +1,4 @@
+source;share/fullrobotassem/local_setup.bash
+source;share/fullrobotassem/local_setup.dsv
+source;share/fullrobotassem/local_setup.sh
+source;share/fullrobotassem/local_setup.zsh

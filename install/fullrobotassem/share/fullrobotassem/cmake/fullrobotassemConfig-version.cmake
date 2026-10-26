@@ -1,0 +1,1 @@
+/home/khanhtrinh/trinh/ag/build/fullrobotassem/ament_cmake_core/fullrobotassemConfig-version.cmake

@@ -1,474 +1,317 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
-     Commit Version: 1.6.0-1-g15f4949  Build Version: 1.6.7594.29634
-     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
-<robot
-  name="fullrobotassem">
-  <link
-    name="base_link">
-    <inertial>
-      <origin
-        xyz="0.18169 0.23656 0.026535"
-        rpy="0 0 0" />
-      <mass
-        value="1.6424" />
-      <inertia
-        ixx="0.018554"
-        ixy="-2.0429E-06"
-        ixz="2.665E-05"
-        iyy="0.019015"
-        iyz="-6.9705E-07"
-        izz="0.022376" />
-    </inertial>
-    <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/base_link.STL" />
-      </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/base_link.STL" />
-      </geometry>
-    </collision>
-  </link>
-  <link
-    name="upper_body">
-    <inertial>
-      <origin
-        xyz="0.51167 0.082198 0.24248"
-        rpy="0 0 0" />
-      <mass
-        value="1.0125" />
-      <inertia
-        ixx="0.015585"
-        ixy="1.1113E-11"
-        ixz="0.00045297"
-        iyy="0.0033239"
-        iyz="-8.855E-10"
-        izz="0.014182" />
-    </inertial>
-    <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/upper_body.STL" />
-      </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/upper_body.STL" />
-      </geometry>
-    </collision>
-  </link>
-  <joint
-    name="upperbody"
-    type="prismatic">
-    <origin
-      xyz="-0.20973 0.15434 0.25626"
-      rpy="0 0 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="upper_body" />
-    <axis
-      xyz="0 0 -1" />
-    <limit
-      lower="0"
-      upper="0.5"
-      effort="50"
-      velocity="0.0384" />
-    <dynamics
-      damping="0.1"
-      friction="0.1" />
+<robot name="fullrobotassem">
+
+  <link name="base_footprint"/>
+
+  <link name="dummy_link"/>
+
+  <joint name="dummy_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 1.5708" /> 
+    <parent link="base_footprint"/>
+    <child link="dummy_link"/>
   </joint>
-  <link
-    name="left_shoulder">
+
+  <joint name="base_joint" type="fixed">
+    <origin xyz="0 0 0.17" rpy="0 0 0" />
+    <parent link="dummy_link"/>
+    <child link="base_link"/>
+  </joint>
+
+  <link name="base_link">
     <inertial>
-      <origin
-        xyz="0.0018239 -0.37459 0.0034287"
-        rpy="0 0 0" />
-      <mass
-        value="0.42814" />
-      <inertia
-        ixx="0.00038187"
-        ixy="6.5097E-07"
-        ixz="1.9282E-06"
-        iyy="0.00038114"
-        iyz="7.843E-06"
-        izz="0.00040597" />
+      <origin xyz="0.18 0.23 -0.1" rpy="0 0 0" />
+      <mass value="15.0" />
+      <inertia ixx="0.5" ixy="0.0" ixz="0.0" iyy="0.5" iyz="0.0" izz="0.5" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/left_shoulder.STL" />
+        <mesh filename="package://fullrobotassem/meshes/base_link.STL" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
+      <!-- base_link: Màu xám -->
+      <material name="gray_base">
+        <color rgba="0.5 0.5 0.5 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/left_shoulder.STL" />
+        <mesh filename="package://fullrobotassem/meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="leftshoulder"
-    type="revolute">
-    <origin
-      xyz="0.28533 0.069834 0.49704"
-      rpy="-3.1416 0.021027 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="left_shoulder" />
-    <axis
-      xyz="0 -1 0" />
-    <limit
-      lower="0"
-      upper="3.1416"
-      effort="1.1"
-      velocity="7.5" />
-    <dynamics
-      damping="0.05"
-      friction="0.05" />
-  </joint>
-  <link
-    name="left_arm">
+
+  <link name="lidar_link">
     <inertial>
-      <origin
-        xyz="-0.023473 0.40429 0.13464"
-        rpy="0 0 0" />
-      <mass
-        value="0.44382" />
-      <inertia
-        ixx="0.00047293"
-        ixy="-1.237E-05"
-        ixz="0.00030713"
-        iyy="0.0010343"
-        iyz="5.6973E-07"
-        izz="0.00068766" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.1" />
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/left_arm.STL" />
+        <cylinder radius="0.001" length="0.001"/>
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.05" length="0.04"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <origin xyz="0.19 0.235 -0.02" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="lidar_link" />
+  </joint>
+
+  <link name="upper_body">
+    <inertial>
+      <origin xyz="0.51167 0.082198 0.24248" rpy="0 0 0" />
+      <mass value="1.0125" />
+      <inertia ixx="0.015585" ixy="1.1113E-11" ixz="0.00045297" iyy="0.0033239" iyz="-8.855E-10" izz="0.014182" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/upper_body.STL" />
+      </geometry>
+      <!-- upper_body: Màu trắng -->
+      <material name="white_body">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/left_arm.STL" />
+        <mesh filename="package://fullrobotassem/meshes/upper_body.STL" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="leftarm"
-    type="revolute">
-    <origin
-      xyz="0.28338 0.067534 0.49138"
-      rpy="3.1416 0.24449 3.1416" />
-    <parent
-      link="base_link" />
-    <child
-      link="left_arm" />
-    <axis
-      xyz="0 -1 0" />
-    <limit
-      lower="0"
-      upper="3.1416"
-      effort="1.1"
-      velocity="7.5" />
-    <dynamics
-      damping="0.05"
-      friction="0.05" />
+
+  <joint name="upperbody" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="upper_body" />
   </joint>
-  <link
-    name="right_shoulder">
+
+  <link name="left_shoulder">
     <inertial>
-      <origin
-        xyz="-0.00070418 -0.36759 -0.002038"
-        rpy="0 0 0" />
-      <mass
-        value="0.42793" />
-      <inertia
-        ixx="0.00038339"
-        ixy="2.042E-06"
-        ixz="-6.1722E-06"
-        iyy="0.00038114"
-        iyz="-7.5994E-06"
-        izz="0.00040445" />
+      <origin xyz="0.0018239 -0.37459 0.0034287" rpy="0 0 0" />
+      <mass value="0.42814" />
+      <inertia ixx="0.00038187" ixy="6.5097E-07" ixz="1.9282E-06" iyy="0.00038114" iyz="7.843E-06" izz="0.00040597" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/right_shoulder.STL" />
+        <mesh filename="package://fullrobotassem/meshes/left_shoulder.STL" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
+      <!-- left_shoulder: Màu trắng -->
+      <material name="white_left_shoulder">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/right_shoulder.STL" />
+        <mesh filename="package://fullrobotassem/meshes/left_shoulder.STL" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="rightshoulder"
-    type="revolute">
-    <origin
-      xyz="0.28769 0.39622 0.49526"
-      rpy="-0.0013994 0.021027 -2.9423E-05" />
-    <parent
-      link="base_link" />
-    <child
-      link="right_shoulder" />
-    <axis
-      xyz="0 -1 0" />
-    <limit
-      lower="0"
-      upper="3.1416"
-      effort="1.1"
-      velocity="7.5" />
-    <dynamics
-      damping="0.05"
-      friction="0.05" />
+
+  <joint name="leftshoulder" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="left_shoulder" />
   </joint>
-  <link
-    name="right_arm">
+
+  <link name="left_arm">
     <inertial>
-      <origin
-        xyz="-0.059013 -0.45576 0.071366"
-        rpy="0 0 0" />
-      <mass
-        value="0.44382" />
-      <inertia
-        ixx="0.00031781"
-        ixy="0.00015273"
-        ixz="0.00013066"
-        iyy="0.0010012"
-        iyz="-1.6114E-05"
-        izz="0.00087585" />
+      <origin xyz="-0.023473 0.40429 0.13464" rpy="0 0 0" />
+      <mass value="0.44382" />
+      <inertia ixx="0.00047293" ixy="-1.237E-05" ixz="0.00030713" iyy="0.0010343" iyz="5.6973E-07" izz="0.00068766" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/right_arm.STL" />
+        <mesh filename="package://fullrobotassem/meshes/left_arm.STL" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
+      <!-- left_arm: Màu trắng -->
+      <material name="white_left_arm">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/right_arm.STL" />
+        <mesh filename="package://fullrobotassem/meshes/left_arm.STL" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="right_arm"
-    type="revolute">
-    <origin
-      xyz="0.29929 0.46406 0.44707"
-      rpy="-3.1402 0.058803 -3.1415" />
-    <parent
-      link="base_link" />
-    <child
-      link="right_arm" />
-    <axis
-      xyz="0 0 -1" />
-    <limit
-      lower="0"
-      upper="3.1416"
-      effort="1.1"
-      velocity="7.5" />
-    <dynamics
-      damping="0.05"
-      friction="0.05" />
+
+  <joint name="leftarm" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="left_arm" />
   </joint>
-  <link
-    name="right_wheel">
+
+  <link name="right_shoulder">
     <inertial>
-      <origin
-        xyz="-0.0023445 0.35936 0.0008921"
-        rpy="0 0 0" />
-      <mass
-        value="0.05056" />
-      <inertia
-        ixx="1.4651E-05"
-        ixy="-4.8342E-09"
-        ixz="4.7127E-10"
-        iyy="2.5069E-05"
-        iyz="-2.331E-08"
-        izz="1.4653E-05" />
+      <origin xyz="-0.00070418 -0.36759 -0.002038" rpy="0 0 0" />
+      <mass value="0.42793" />
+      <inertia ixx="0.00038339" ixy="2.042E-06" ixz="-6.1722E-06" iyy="0.00038114" iyz="-7.5994E-06" izz="0.00040445" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/right_wheel.STL" />
+        <mesh filename="package://fullrobotassem/meshes/right_shoulder.STL" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
+      <!-- right_shoulder: Màu trắng -->
+      <material name="white_right_shoulder">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/right_wheel.STL" />
+        <mesh filename="package://fullrobotassem/meshes/right_shoulder.STL" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="rightwheel"
-    type="continuous">
-    <origin
-      xyz="0.044232 0.41503 -0.1501"
-      rpy="0 0 3.1416" />
-    <parent
-      link="base_link" />
-    <child
-      link="right_wheel" />
-    <axis
-      xyz="0 -1 0" />
-    <limit
-      lower="0"
-      upper="0"
-      effort="2"
-      velocity="11.519" />
-    <dynamics
-      damping="0.1"
-      friction="0.1" />
+
+  <joint name="rightshoulder" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="right_shoulder" />
   </joint>
-  <link
-    name="left_wheel">
+
+  <link name="right_arm">
     <inertial>
-      <origin
-        xyz="0.002619 0.35924 -0.00016613"
-        rpy="0 0 0" />
-      <mass
-        value="0.05056" />
-      <inertia
-        ixx="1.4651E-05"
-        ixy="-2.0514E-09"
-        ixz="-2.0348E-10"
-        iyy="2.5069E-05"
-        iyz="2.3717E-08"
-        izz="1.4653E-05" />
+      <origin xyz="-0.059013 -0.45576 0.071366" rpy="0 0 0" />
+      <mass value="0.44382" />
+      <inertia ixx="0.00031781" ixy="0.00015273" ixz="0.00013066" iyy="0.0010012" iyz="-1.6114E-05" izz="0.00087585" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/left_wheel.STL" />
+        <mesh filename="package://fullrobotassem/meshes/right_arm.STL" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
+      <!-- right_arm: Màu trắng -->
+      <material name="white_right_arm">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://fullrobotassem/meshes/left_wheel.STL" />
+        <mesh filename="package://fullrobotassem/meshes/right_arm.STL" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="leftwheel"
-    type="continuous">
-    <origin
-      xyz="0.049203 0.05815 -0.14938"
-      rpy="3.1416 0 -3.1416" />
-    <parent
-      link="base_link" />
-    <child
-      link="left_wheel" />
-    <axis
-      xyz="0 -1 0" />
-    <limit
-      lower="0"
-      upper="0"
-      effort="2"
-      velocity="11.519" />
-    <dynamics
-      damping="0.1"
-      friction="0.1" />
+
+  <joint name="right_arm_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="right_arm" />
   </joint>
+
+  <link name="right_wheel">
+    <inertial>
+      <origin xyz="-0.0023445 0.35936 0.0008921" rpy="0 0 0" />
+      <mass value="0.05056" />
+      <inertia ixx="1.4651E-05" ixy="-4.8342E-09" ixz="4.7127E-10" iyy="2.5069E-05" iyz="-2.331E-08" izz="1.4653E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/right_wheel.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/right_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="rightwheel" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="right_wheel" />
+  </joint>
+
+  <link name="left_wheel">
+    <inertial>
+      <origin xyz="0.002619 0.35924 -0.00016613" rpy="0 0 0" />
+      <mass value="0.05056" />
+      <inertia ixx="1.4651E-05" ixy="-2.0514E-09" ixz="-2.0348E-10" iyy="2.5069E-05" iyz="2.3717E-08" izz="1.4653E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/left_wheel.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/left_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="leftwheel" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="left_wheel" />
+  </joint>
+
+
+  <gazebo reference="lidar_link">
+    <sensor name="lidar" type="gpu_lidar">
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <update_rate>40</update_rate>
+      <topic>/scan</topic>
+      <gz_frame_id>lidar_link</gz_frame_id>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>30.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </ray>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="left_wheel">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+  </gazebo>
+
+  <gazebo reference="right_wheel">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+  </gazebo>
 </robot>
