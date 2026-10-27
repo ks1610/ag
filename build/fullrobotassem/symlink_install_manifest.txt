@@ -4,6 +4,7 @@
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/launch/display.launch.py
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/launch/gazebo.launch
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/launch/gazebo.launch.py
+/home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/launch/mapping.launch.py
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/launch/maze_navigation.launch.py
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/meshes/base_link.STL
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/meshes/left_arm.STL

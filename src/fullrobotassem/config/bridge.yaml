@@ -17,3 +17,8 @@
   ros_type_name: tf2_msgs/msg/TFMessage
   gz_type_name: ignition.msgs.Pose_V
   direction: GZ_TO_ROS
+
+- topic_name: "/joint_states"
+  ros_type_name: "sensor_msgs/msg/JointState"
+  gz_type_name: "gz.msgs.Model"
+  direction: "INPUT"
