@@ -4,3 +4,5 @@ baocao/
 cad/fullrobot/fulltempver.SLDASM
 cad/fullrobot/upperbody.SLDASM
 cad/linhkien/draft/
+src/fullrobotassem/gen_inertial.py
+src/fullrobotassem/wheel_center.py

@@ -37,7 +37,7 @@ def generate_launch_description():
     )
 
     # Lấy đường dẫn tới file World mới tạo
-    world_file_path = os.path.join(pkg_path, 'worlds', 'my_world.sdf')
+    world_file_path = os.path.join(pkg_path, 'worlds', 'maze2.sdf')
 
     # 2. Khởi động Gazebo Sim với World tùy chỉnh
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
@@ -47,14 +47,6 @@ def generate_launch_description():
         ),
         launch_arguments={'gz_args': f'-r {world_file_path}'}.items(), # Đã truyền file SDF và -r để tự động Play
     )
-    # # 2. Khởi động Gazebo Sim
-    # pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
-    # gazebo = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
-    #     ),
-    #     launch_arguments={'gz_args': '-r empty.sdf'}.items(),
-    # )
 
     # 3. Spawn robot vào Gazebo Sim
     spawn_entity = Node(
@@ -63,16 +55,7 @@ def generate_launch_description():
         arguments=['-topic', 'robot_description', '-entity', 'fullrobotassem', '-z', '0.2'],
         output='screen'
     )
-
-    # 4. Bridge chuyển đổi dữ liệu /scan từ Ignition sang ROS 2
-    # bridge = Node(
-    #     package='ros_gz_bridge',
-    #     executable='parameter_bridge',
-    #     arguments=[
-    #         '/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan'
-    #     ],
-    #     output='screen'
-    # )
+    
     # 4. Bridge chuyển đổi dữ liệu /scan từ Gazebo (gz) sang ROS 2
     bridge = Node(
         package='ros_gz_bridge',

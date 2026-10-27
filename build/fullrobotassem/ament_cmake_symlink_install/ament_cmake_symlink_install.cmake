@@ -315,8 +315,8 @@ message(STATUS "Execute custom install script")
 
 # begin of custom install code
 
-# install(DIRECTORY "launch" "meshes" "urdf" "worlds" "DESTINATION" "share/fullrobotassem")
-ament_cmake_symlink_install_directory("/home/khanhtrinh/trinh/ag/src/fullrobotassem" DIRECTORY "launch" "meshes" "urdf" "worlds" "DESTINATION" "share/fullrobotassem")
+# install(DIRECTORY "config" "launch" "meshes" "urdf" "worlds" "DESTINATION" "share/fullrobotassem")
+ament_cmake_symlink_install_directory("/home/khanhtrinh/trinh/ag/src/fullrobotassem" DIRECTORY "config" "launch" "meshes" "urdf" "worlds" "DESTINATION" "share/fullrobotassem")
 
 # install(FILES "/home/khanhtrinh/trinh/ag/build/fullrobotassem/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/fullrobotassem" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")
 ament_cmake_symlink_install_files("/home/khanhtrinh/trinh/ag/src/fullrobotassem" FILES "/home/khanhtrinh/trinh/ag/build/fullrobotassem/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/fullrobotassem" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")

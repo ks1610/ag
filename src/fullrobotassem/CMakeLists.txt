@@ -10,11 +10,16 @@ find_package(ament_cmake REQUIRED)
 # Cài đặt các thư mục cần thiết
 install(
   DIRECTORY
+    config
     launch
     meshes
     urdf
     worlds
   DESTINATION share/${PROJECT_NAME}
 )
+
+if(POLICY CMP0009)
+  cmake_policy(SET CMP0009 NEW)
+endif()
 
 ament_package()

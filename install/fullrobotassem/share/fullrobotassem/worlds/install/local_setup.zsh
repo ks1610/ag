@@ -1,0 +1,1 @@
+/home/khanhtrinh/trinh/ag/src/fullrobotassem/worlds/install/local_setup.zsh
