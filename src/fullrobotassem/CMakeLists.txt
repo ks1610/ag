@@ -22,4 +22,11 @@ if(POLICY CMP0009)
   cmake_policy(SET CMP0009 NEW)
 endif()
 
+find_package(rclpy REQUIRED)
+
+install(
+  PROGRAMS scripts/bluetooth_teleop.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()

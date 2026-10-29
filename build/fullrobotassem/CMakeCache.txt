@@ -298,6 +298,9 @@ fullrobotassem_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 fullrobotassem_SOURCE_DIR:STATIC=/home/khanhtrinh/trinh/ag/src/fullrobotassem
 
+//The directory containing a CMake configuration file for rclpy.
+rclpy_DIR:PATH=/opt/ros/jazzy/share/rclpy/cmake
+
 
 ########################
 # INTERNAL cache entries

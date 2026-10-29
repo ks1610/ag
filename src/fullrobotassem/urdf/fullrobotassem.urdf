@@ -3,17 +3,9 @@
 
   <link name="base_footprint"/>
 
-  <link name="dummy_link"/>
-
-  <joint name="dummy_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 1.5708" /> 
-    <parent link="base_footprint"/>
-    <child link="dummy_link"/>
-  </joint>
-
   <joint name="base_joint" type="fixed">
-    <origin xyz="0 0 0.17626923" rpy="0 0 0" />
-    <parent link="dummy_link"/>
+    <origin xyz="-0.046589 -0.236534 0.17626923" rpy="0 0 0"/>
+    <parent link="base_footprint"/>
     <child link="base_link"/>
   </joint>
 

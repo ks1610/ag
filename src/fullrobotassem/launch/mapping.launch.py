@@ -1,3 +1,12 @@
+# ros2 launch fullrobotassem mapping.launch.py
+
+# Bluetooth app:
+# cd ~/Downloads/bluetooth_robot_kit
+# ./2_start_bluetooth.sh
+
+# Default controler:
+# ros2 run teleop_twist_keyboard teleop_twist_keyboard
+
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -79,29 +88,14 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. Thuật toán quét lập bản đồ SLAM Toolbox
-    slam_toolbox = Node(
-        package='slam_toolbox',
-        executable='async_slam_toolbox_node',
-        name='slam_toolbox',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-            'solver_plugin': 'solver_plugins::CeresSolver',
-            'ceres_linear_solver': 'SPARSE_NORMAL_CHOLESKY',
-            'ceres_preconditioner': 'SCHUR_JACOBI',
-            'ceres_trust_strategy': 'LEVENBERG_MARQUARDT',
-            'base_frame': 'base_footprint',
-            'odom_frame': 'odom',
-            'map_frame': 'map',
-            'scan_topic': '/scan',
-            'mode': 'mapping',
-            'transform_timeout': 0.2,
-            'tf_buffer_duration': 30.0,
-            'max_laser_range': 30.0,
-            'minimum_time_interval': 0.1,
-            'resolution': 0.05
-        }]
+    # 5. Thuật toán quét lập bản đồ SLAM Toolbox (Sử dụng cấu hình chuẩn của ROS 2)
+    slam_toolbox = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')),
+        launch_arguments={
+            'use_sim_time': 'true',
+            'slam_params_file': os.path.join(pkg_fullrobotassem, 'config', 'mapper_params_online_async.yaml')
+        }.items()
     )
 
     # 6. Mở RViz2
@@ -113,14 +107,30 @@ def generate_launch_description():
         output='screen'
     )
 
+    bluetooth_teleop = Node(
+    package='fullrobotassem',
+    executable='bluetooth_teleop.py',
+    name='bluetooth_teleop',
+    output='screen',
+    parameters=[{
+        'port': '/dev/rfcomm0',
+        'baud': 9600,
+        'linear_speed': 0.20,
+        'spin_speed': 0.8,
+        'curve_angular': 0.5,
+        'cmd_timeout': 0.5,
+    }]
+    )
+
     return LaunchDescription([
         set_env,
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Dùng thời gian mô phỏng'),
         gazebo,
         robot_state_publisher,
-        joint_state_publisher,  # Đưa node này vào danh sách chạy
+        joint_state_publisher,
         spawn_robot,
         bridge,
         slam_toolbox,
-        rviz
+        rviz,
+        bluetooth_teleop
     ])

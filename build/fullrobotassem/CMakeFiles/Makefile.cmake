@@ -132,6 +132,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/ros/jazzy/share/ament_cmake_version/cmake/ament_cmake_versionConfig-version.cmake"
   "/opt/ros/jazzy/share/ament_cmake_version/cmake/ament_cmake_versionConfig.cmake"
   "/opt/ros/jazzy/share/ament_cmake_version/cmake/ament_export_development_version_if_higher_than_manifest.cmake"
+  "/opt/ros/jazzy/share/rclpy/cmake/rclpyConfig-version.cmake"
+  "/opt/ros/jazzy/share/rclpy/cmake/rclpyConfig.cmake"
   "/usr/share/cmake-3.28/Modules/CMakeCInformation.cmake"
   "/usr/share/cmake-3.28/Modules/CMakeCXXInformation.cmake"
   "/usr/share/cmake-3.28/Modules/CMakeCommonLanguageInclude.cmake"

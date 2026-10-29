@@ -1,1 +1,1 @@
-urdf;robot_state_publisher;joint_state_publisher_gui;rviz2;xacro
+urdf;robot_state_publisher;joint_state_publisher_gui;rviz2;xacro;rclpy;geometry_msgs;python3-serial
