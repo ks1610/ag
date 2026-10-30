@@ -1,7 +1,7 @@
 # ros2 launch fullrobotassem mapping.launch.py
 
 # Bluetooth app:
-# cd ~/Downloads/bluetooth_robot_kit
+
 # ./2_start_bluetooth.sh
 
 # Default controler:
@@ -107,6 +107,7 @@ def generate_launch_description():
         output='screen'
     )
 
+    #7 . Bluetooth Teleop Node
     bluetooth_teleop = Node(
     package='fullrobotassem',
     executable='bluetooth_teleop.py',
@@ -118,7 +119,7 @@ def generate_launch_description():
         'linear_speed': 0.20,
         'spin_speed': 0.8,
         'curve_angular': 0.5,
-        'cmd_timeout': 0.5,
+        'cmd_timeout': 0.0,
     }]
     )
 
