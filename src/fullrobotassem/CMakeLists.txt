@@ -7,7 +7,6 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 
-# Cài đặt các thư mục cần thiết
 install(
   DIRECTORY
     config
@@ -15,6 +14,7 @@ install(
     meshes
     urdf
     worlds
+    maps
   DESTINATION share/${PROJECT_NAME}
 )
 

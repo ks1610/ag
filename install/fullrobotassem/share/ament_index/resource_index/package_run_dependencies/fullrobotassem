@@ -1,1 +1,1 @@
-/home/khanhtrinh/trinh/ag/build/fullrobotassem/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/fullrobotassem
+urdf;robot_state_publisher;joint_state_publisher_gui;rviz2;xacro;rclpy;geometry_msgs;python3-serial

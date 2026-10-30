@@ -1,1 +1,1 @@
-/home/khanhtrinh/trinh/ag/src/fullrobotassem/config/joint_names_fullrobotassem.yaml
+controller_joint_names: ['', 'upperbody', 'leftshoulder', 'leftarm', 'rightshoulder', 'right_arm', 'rightwheel', 'leftwheel', ]

@@ -1,1 +1,42 @@
-/home/khanhtrinh/trinh/ag/build/fullrobotassem/ament_cmake_core/fullrobotassemConfig.cmake
+# generated from ament/cmake/core/templates/nameConfig.cmake.in
+
+# prevent multiple inclusion
+if(_fullrobotassem_CONFIG_INCLUDED)
+  # ensure to keep the found flag the same
+  if(NOT DEFINED fullrobotassem_FOUND)
+    # explicitly set it to FALSE, otherwise CMake will set it to TRUE
+    set(fullrobotassem_FOUND FALSE)
+  elseif(NOT fullrobotassem_FOUND)
+    # use separate condition to avoid uninitialized variable warning
+    set(fullrobotassem_FOUND FALSE)
+  endif()
+  return()
+endif()
+set(_fullrobotassem_CONFIG_INCLUDED TRUE)
+
+# output package information
+if(NOT fullrobotassem_FIND_QUIETLY)
+  message(STATUS "Found fullrobotassem: 1.0.0 (${fullrobotassem_DIR})")
+endif()
+
+# warn when using a deprecated package
+if(NOT "" STREQUAL "")
+  set(_msg "Package 'fullrobotassem' is deprecated")
+  # append custom deprecation text if available
+  if(NOT "" STREQUAL "TRUE")
+    set(_msg "${_msg} ()")
+  endif()
+  # optionally quiet the deprecation message
+  if(NOT fullrobotassem_DEPRECATED_QUIET)
+    message(DEPRECATION "${_msg}")
+  endif()
+endif()
+
+# flag package as ament-based to distinguish it after being find_package()-ed
+set(fullrobotassem_FOUND_AMENT_PACKAGE TRUE)
+
+# include all config extra files
+set(_extras "")
+foreach(_extra ${_extras})
+  include("${fullrobotassem_DIR}/${_extra}")
+endforeach()
