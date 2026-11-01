@@ -11,10 +11,8 @@ def generate_launch_description():
     pkg_share = get_package_share_directory(package_name)
     nav2_bringup_share = get_package_share_directory('nav2_bringup')
 
-    # Thư mục cha chứa package (install/fullrobotassem/share) để Gazebo load mesh
     pkg_parent_share = os.path.dirname(pkg_share)
 
-    # Thêm biến môi trường cho Gazebo Sim
     set_gz_resource_path = SetEnvironmentVariable(
         name='GZ_SIM_RESOURCE_PATH',
         value=pkg_parent_share

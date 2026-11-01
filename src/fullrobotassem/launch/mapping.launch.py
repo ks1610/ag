@@ -2,6 +2,7 @@
 
 # Bluetooth app:
 
+# cd ~/bluetooth_robot_kit
 # ./2_start_bluetooth.sh
 
 # Default controler:
@@ -82,7 +83,10 @@ def generate_launch_description():
             '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
             '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
             '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
-            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+            '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
+            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model'
         ],
         parameters=[{'use_sim_time': use_sim_time}],
         output='screen'
