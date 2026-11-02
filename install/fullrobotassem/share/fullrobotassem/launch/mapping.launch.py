@@ -52,13 +52,12 @@ def generate_launch_description():
         }]
     )
 
-    # BỔ SUNG: Joint State Publisher để xuất trạng thái các khớp bánh xe (Khắc phục lỗi No transform)
-    joint_state_publisher = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        name='joint_state_publisher',
-        parameters=[{'use_sim_time': use_sim_time}]
-    )
+    # joint_state_publisher = Node(
+    #     package='joint_state_publisher',
+    #     executable='joint_state_publisher',
+    #     name='joint_state_publisher',
+    #     parameters=[{'use_sim_time': use_sim_time}]
+    # )
 
     # 3. Spawn Robot vào môi trường Gazebo
     spawn_robot = Node(
@@ -86,7 +85,8 @@ def generate_launch_description():
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
             '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
             '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
-            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model'
+            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
+            '/upper_body/cmd_pos@std_msgs/msg/Float64]gz.msgs.Double'
         ],
         parameters=[{'use_sim_time': use_sim_time}],
         output='screen'
@@ -127,16 +127,31 @@ def generate_launch_description():
     }]
     )
 
+    # 8. Upper body control panel
+    upper_body_panel = Node(
+        package='fullrobotassem',
+        executable='upper_body_panel.py',
+        name='upper_body_panel',
+        output='screen',
+        parameters=[{
+            'min_pos': -0.30,
+            'max_pos': 0.065,
+            'step': 0.01,
+            'speed': 0.05,
+        }]
+    )
+
     return LaunchDescription([
         set_env,
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Dùng thời gian mô phỏng'),
         gazebo,
         robot_state_publisher,
-        joint_state_publisher,
+        # joint_state_publisher,
         spawn_robot,
         bridge,
         slam_toolbox,
         rviz,
-        bluetooth_teleop
+        bluetooth_teleop,
+        upper_body_panel
     ])
     

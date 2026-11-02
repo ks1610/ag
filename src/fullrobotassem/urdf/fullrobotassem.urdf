@@ -82,10 +82,13 @@
     </collision>
   </link>
 
-  <joint name="upperbody" type="fixed">
+  <joint name="upperbody" type="prismatic">
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="base_link" />
     <child link="upper_body" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.30" upper="0.065" effort="100" velocity="0.1" />
+    <dynamics damping="5.0" friction="1.0" />
   </joint>
 
   <link name="left_shoulder">
@@ -113,7 +116,7 @@
 
   <joint name="leftshoulder" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="upper_body" />
     <child link="left_shoulder" />
   </joint>
 
@@ -143,7 +146,7 @@
 
   <joint name="leftarm" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="upper_body" />
     <child link="left_arm" />
   </joint>
 
@@ -172,7 +175,7 @@
 
   <joint name="rightshoulder" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="upper_body" />
     <child link="right_shoulder" />
   </joint>
 
@@ -201,7 +204,7 @@
 
   <joint name="right_arm_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="upper_body" />
     <child link="right_arm" />
   </joint>
 
@@ -434,6 +437,20 @@
         </clip>
       </camera>
     </sensor>
+  </gazebo>
+  <gazebo>
+    <plugin filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+      <joint_name>upperbody</joint_name>
+      <topic>/upper_body/cmd_pos</topic>
+      <p_gain>2000</p_gain>
+      <i_gain>100</i_gain>
+      <d_gain>150</d_gain>
+      <i_max>50</i_max>
+      <i_min>-50</i_min>
+      <cmd_max>100</cmd_max>
+      <cmd_min>-100</cmd_min>
+    </plugin>
   </gazebo>
 
 </robot>

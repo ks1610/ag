@@ -25,7 +25,9 @@ endif()
 find_package(rclpy REQUIRED)
 
 install(
-  PROGRAMS scripts/bluetooth_teleop.py
+  PROGRAMS 
+    scripts/bluetooth_teleop.py 
+    scripts/upper_body_panel.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

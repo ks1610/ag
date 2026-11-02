@@ -54,7 +54,10 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/fullrobotassem" TYPE PROGRAM FILES "/home/khanhtrinh/trinh/ag/src/fullrobotassem/scripts/bluetooth_teleop.py")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/fullrobotassem" TYPE PROGRAM FILES
+    "/home/khanhtrinh/trinh/ag/src/fullrobotassem/scripts/bluetooth_teleop.py"
+    "/home/khanhtrinh/trinh/ag/src/fullrobotassem/scripts/upper_body_panel.py"
+    )
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
