@@ -91,35 +91,6 @@
     <dynamics damping="5.0" friction="1.0" />
   </joint>
 
-  <!-- <link name="left_shoulder">
-    <inertial>
-      <origin xyz="0.287084 0.444446 0.493527" rpy="0 0 0" />
-      <mass value="0.42814" />
-      <inertia ixx="0.000424904" ixy="-2.0093e-06" ixz="1.14749e-06" iyy="0.000411979" iyz="2.78952e-05" izz="0.000418193" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://fullrobotassem/meshes/left_shoulder.STL" />
-      </geometry>
-      <material name="white_left_shoulder">
-        <color rgba="1 1 1 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://fullrobotassem/meshes/left_shoulder.STL" />
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="leftshoulder" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="upper_body" />
-    <child link="left_shoulder" />
-  </joint> -->
-
   <link name="left_shoulder">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -154,13 +125,11 @@
 
   <link name="left_arm">
     <inertial>
-      <!-- <origin xyz="0.051641 0.027381 -0.127083" rpy="0 0 0" /> -->
       <origin xyz="0.039221 0.009252 -0.127083" rpy="0 0 0" />
       <mass value="0.44382" />
       <inertia ixx="0.00100882" ixy="-0.000152956" ixz="0.000891016" iyy="0.00237659" iyz="0.000157432" izz="0.00157024" />
     </inertial>
     <visual>
-      <!-- <origin xyz="-0.287084 -0.444446 -0.493527" rpy="0 0 0" /> -->
       <origin xyz="-0.299505 -0.462575 -0.493527" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/left_arm.STL" />
@@ -170,7 +139,6 @@
       </material>
     </visual>
     <collision>
-      <!-- <origin xyz="-0.287084 -0.444446 -0.493527" rpy="0 0 0" /> -->
       <origin xyz="-0.299505 -0.462575 -0.493527" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/left_arm.STL" />
@@ -186,35 +154,6 @@
     <limit lower="-1.57" upper="1.57" effort="5" velocity="2.0" />
     <dynamics damping="0.1" friction="0.05" />
   </joint>
-
-  <!-- <link name="right_shoulder">
-    <inertial>
-      <origin xyz="0.286956 0.028614 0.493711" rpy="0 0 0" />
-      <mass value="0.42793" />
-      <inertia ixx="0.000423755" ixy="6.96857e-06" ixz="2.06603e-06" iyy="0.000411368" iyz="-2.68761e-05" izz="0.000418739" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://fullrobotassem/meshes/right_shoulder.STL" />
-      </geometry>
-      <material name="white_right_shoulder">
-        <color rgba="1 1 1 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://fullrobotassem/meshes/right_shoulder.STL" />
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="rightshoulder" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="upper_body" />
-    <child link="right_shoulder" />
-  </joint> -->
 
   <link name="right_shoulder">
     <inertial>
@@ -250,14 +189,11 @@
 
   <link name="right_arm">
     <inertial>
-      <!-- <origin xyz="0.075418 -0.020413 -0.113765" rpy="0 0 0" /> -->
-      <!-- <origin xyz="0.051201 -0.000209 -0.113765" rpy="0 0 0" /> -->
       <origin xyz="0.063229 -0.002284 -0.116748" rpy="0 0 0" />
       <mass value="0.44382" />
       <inertia ixx="0.000649348" ixy="-0.000124844" ixz="0.00068582" iyy="0.00235011" iyz="-9.51443e-06" izz="0.00189447" />
     </inertial>
     <visual>
-      <!-- <origin xyz="-0.286956 -0.028614 -0.493711" rpy="0 0 0" /> -->
       <origin xyz="-0.299145 -0.010485 -0.496694" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/right_arm.STL" />
@@ -267,7 +203,6 @@
       </material>
     </visual> 
     <collision>
-      <!-- <origin xyz="-0.286956 -0.028614 -0.493711" rpy="0 0 0" /> -->
       <origin xyz="-0.299145 -0.010485 -0.496694" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/right_arm.STL" />
@@ -476,11 +411,8 @@
     </collision>
   </link>
 
-  <!-- OPTICAL LINK: Đảm bảo hướng tọa độ camera chuẩn ROS (X-tiến, Y-trái, Z-lên) -->
   <link name="camera_link_optical"/>
 
-  <!-- 2. CAMERA JOINTS -->
-  <!-- Joint gắn camera vào upper_body -->
   <joint name="camera_joint" type="fixed">
     <origin xyz="0.35 0.2365 0.52" rpy="0 0.349066 0"/>
     <parent link="upper_body"/>
@@ -493,7 +425,6 @@
     <child link="camera_link_optical"/>
   </joint>
 
-  <!-- 3. GAZEBO CAMERA SENSOR -->
   <gazebo reference="camera_link">
     <sensor name="camera" type="camera">
       <always_on>true</always_on>
@@ -501,7 +432,7 @@
       <topic>/camera/image_raw</topic>
       <gz_frame_id>camera_link_optical</gz_frame_id>
       <camera>
-        <horizontal_fov>1.089</horizontal_fov> <!-- Góc mở camera (~62 độ) -->
+        <horizontal_fov>1.089</horizontal_fov> 
         <image>
           <width>640</width>
           <height>480</height>
