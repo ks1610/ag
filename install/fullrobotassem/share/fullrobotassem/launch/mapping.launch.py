@@ -52,13 +52,6 @@ def generate_launch_description():
         }]
     )
 
-    # joint_state_publisher = Node(
-    #     package='joint_state_publisher',
-    #     executable='joint_state_publisher',
-    #     name='joint_state_publisher',
-    #     parameters=[{'use_sim_time': use_sim_time}]
-    # )
-
     # 3. Spawn Robot vào môi trường Gazebo
     spawn_robot = Node(
         package='ros_gz_sim',
@@ -86,7 +79,11 @@ def generate_launch_description():
             '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
             '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
             '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
-            '/upper_body/cmd_pos@std_msgs/msg/Float64]gz.msgs.Double'
+            '/upper_body/cmd_pos@std_msgs/msg/Float64]gz.msgs.Double',
+            '/left_shoulder/cmd_pos@std_msgs/msg/Float64]gz.msgs.Double',
+            '/right_shoulder/cmd_pos@std_msgs/msg/Float64]gz.msgs.Double',
+            '/left_arm/cmd_pos@std_msgs/msg/Float64]gz.msgs.Double',
+            '/right_arm/cmd_pos@std_msgs/msg/Float64]gz.msgs.Double'
         ],
         parameters=[{'use_sim_time': use_sim_time}],
         output='screen'
@@ -127,7 +124,7 @@ def generate_launch_description():
     }]
     )
 
-    # 8. Upper body control panel
+    # 8. Upper body + arms control panel
     upper_body_panel = Node(
         package='fullrobotassem',
         executable='upper_body_panel.py',
@@ -138,6 +135,14 @@ def generate_launch_description():
             'max_pos': 0.065,
             'step': 0.01,
             'speed': 0.05,
+            'shoulder_min': -3.14,
+            'shoulder_max': 1.57,
+            'shoulder_step': 0.1,
+            'shoulder_speed': 0.8,
+            'arm_min': -1.57,
+            'arm_max': 1.57,
+            'arm_step': 0.1,
+            'arm_speed': 0.8,
         }]
     )
 

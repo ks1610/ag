@@ -91,7 +91,7 @@
     <dynamics damping="5.0" friction="1.0" />
   </joint>
 
-  <link name="left_shoulder">
+  <!-- <link name="left_shoulder">
     <inertial>
       <origin xyz="0.287084 0.444446 0.493527" rpy="0 0 0" />
       <mass value="0.42814" />
@@ -118,17 +118,50 @@
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="upper_body" />
     <child link="left_shoulder" />
+  </joint> -->
+
+  <link name="left_shoulder">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.42814" />
+      <inertia ixx="0.000424904" ixy="-2.0093e-06" ixz="1.14749e-06" iyy="0.000411979" iyz="2.78952e-05" izz="0.000418193" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.287084 -0.444446 -0.493527" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/left_shoulder.STL" />
+      </geometry>
+      <material name="white_left_shoulder">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.287084 -0.444446 -0.493527" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/left_shoulder.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="left_shoulder_joint" type="revolute">
+    <origin xyz="0.287084 0.444446 0.493527" rpy="0 0 0" />
+    <parent link="upper_body" />
+    <child link="left_shoulder" />
+    <axis xyz="0 1 0" />
+    <limit lower="-3.14" upper="1.57" effort="5" velocity="2.0" />
+    <dynamics damping="0.1" friction="0.05" />
   </joint>
 
   <link name="left_arm">
     <inertial>
-      <origin xyz="0.338725 0.471827 0.366444" rpy="0 0 0" />
+      <!-- <origin xyz="0.051641 0.027381 -0.127083" rpy="0 0 0" /> -->
+      <origin xyz="0.039221 0.009252 -0.127083" rpy="0 0 0" />
       <mass value="0.44382" />
       <inertia ixx="0.00100882" ixy="-0.000152956" ixz="0.000891016" iyy="0.00237659" iyz="0.000157432" izz="0.00157024" />
     </inertial>
-    
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <!-- <origin xyz="-0.287084 -0.444446 -0.493527" rpy="0 0 0" /> -->
+      <origin xyz="-0.299505 -0.462575 -0.493527" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/left_arm.STL" />
       </geometry>
@@ -137,20 +170,24 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <!-- <origin xyz="-0.287084 -0.444446 -0.493527" rpy="0 0 0" /> -->
+      <origin xyz="-0.299505 -0.462575 -0.493527" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/left_arm.STL" />
       </geometry>
     </collision>
   </link>
-
-  <joint name="leftarm" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="upper_body" />
+  <joint name="left_arm_joint" type="revolute">
+    <!-- <origin xyz="0 0 0" rpy="0 0 0" /> -->
+    <origin xyz="0.012421 0.018129 0" rpy="0 0 0" />
+    <parent link="left_shoulder" />
     <child link="left_arm" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.57" upper="1.57" effort="5" velocity="2.0" />
+    <dynamics damping="0.1" friction="0.05" />
   </joint>
 
-  <link name="right_shoulder">
+  <!-- <link name="right_shoulder">
     <inertial>
       <origin xyz="0.286956 0.028614 0.493711" rpy="0 0 0" />
       <mass value="0.42793" />
@@ -177,35 +214,74 @@
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="upper_body" />
     <child link="right_shoulder" />
+  </joint> -->
+
+  <link name="right_shoulder">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.42793" />
+      <inertia ixx="0.000423755" ixy="6.96857e-06" ixz="2.06603e-06" iyy="0.000411368" iyz="-2.68761e-05" izz="0.000418739" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.286956 -0.028614 -0.493711" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/right_shoulder.STL" />
+      </geometry>
+      <material name="white_right_shoulder">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.286956 -0.028614 -0.493711" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://fullrobotassem/meshes/right_shoulder.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="right_shoulder_joint" type="revolute">
+    <origin xyz="0.286956 0.028614 0.493711" rpy="0 0.24 0" />
+    <parent link="upper_body" />
+    <child link="right_shoulder" />
+    <axis xyz="0 1 0" />
+    <limit lower="-3.38" upper="1.33" effort="5" velocity="2.0" />
+    <dynamics damping="0.1" friction="0.05" />
   </joint>
 
   <link name="right_arm">
     <inertial>
-      <origin xyz="0.362374 0.008201 0.379946" rpy="0 0 0" />
+      <!-- <origin xyz="0.075418 -0.020413 -0.113765" rpy="0 0 0" /> -->
+      <!-- <origin xyz="0.051201 -0.000209 -0.113765" rpy="0 0 0" /> -->
+      <origin xyz="0.063229 -0.002284 -0.116748" rpy="0 0 0" />
       <mass value="0.44382" />
       <inertia ixx="0.000649348" ixy="-0.000124844" ixz="0.00068582" iyy="0.00235011" iyz="-9.51443e-06" izz="0.00189447" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <!-- <origin xyz="-0.286956 -0.028614 -0.493711" rpy="0 0 0" /> -->
+      <origin xyz="-0.299145 -0.010485 -0.496694" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/right_arm.STL" />
       </geometry>
       <material name="white_right_arm">
         <color rgba="1 1 1 1" />
       </material>
-    </visual>
+    </visual> 
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <!-- <origin xyz="-0.286956 -0.028614 -0.493711" rpy="0 0 0" /> -->
+      <origin xyz="-0.299145 -0.010485 -0.496694" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://fullrobotassem/meshes/right_arm.STL" />
       </geometry>
     </collision>
   </link>
 
-  <joint name="right_arm_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="upper_body" />
+  <joint name="right_arm_joint" type="revolute">
+    <origin xyz="0.012189 -0.018129 0.002983" rpy="0 0 0" />
+    <parent link="right_shoulder" />
     <child link="right_arm" />
+    <axis xyz="-0.237703 0 0.971338" />
+    <limit lower="-1.57" upper="1.57" effort="5" velocity="2.0" />
+    <dynamics damping="0.1" friction="0.05" />
   </joint>
 
 <link name="right_wheel">
@@ -453,4 +529,64 @@
     </plugin>
   </gazebo>
 
+  <gazebo>
+    <plugin filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+      <joint_name>left_arm_joint</joint_name>
+      <topic>/left_arm/cmd_pos</topic>
+      <p_gain>20</p_gain>
+      <i_gain>0.5</i_gain>
+      <d_gain>2</d_gain>
+      <i_max>2</i_max>
+      <i_min>-2</i_min>
+      <cmd_max>5</cmd_max>
+      <cmd_min>-5</cmd_min>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+      <joint_name>right_arm_joint</joint_name>
+      <topic>/right_arm/cmd_pos</topic>
+      <p_gain>20</p_gain>
+      <i_gain>0.5</i_gain>
+      <d_gain>2</d_gain>
+      <i_max>2</i_max>
+      <i_min>-2</i_min>
+      <cmd_max>5</cmd_max>
+      <cmd_min>-5</cmd_min>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+      <joint_name>left_shoulder_joint</joint_name>
+      <topic>/left_shoulder/cmd_pos</topic>
+      <p_gain>20</p_gain>
+      <i_gain>0.5</i_gain>
+      <d_gain>2</d_gain>
+      <i_max>2</i_max>
+      <i_min>-2</i_min>
+      <cmd_max>5</cmd_max>
+      <cmd_min>-5</cmd_min>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+      <joint_name>right_shoulder_joint</joint_name>
+      <topic>/right_shoulder/cmd_pos</topic>
+      <p_gain>20</p_gain>
+      <i_gain>0.5</i_gain>
+      <d_gain>2</d_gain>
+      <i_max>2</i_max>
+      <i_min>-2</i_min>
+      <cmd_max>5</cmd_max>
+      <cmd_min>-5</cmd_min>
+    </plugin>
+  </gazebo>
+  
 </robot>
