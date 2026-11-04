@@ -27,11 +27,16 @@ def generate_launch_description():
 
     world_file = os.path.join(pkg_fullrobotassem, 'worlds', 'maze2.sdf')
     urdf_file = os.path.join(pkg_fullrobotassem, 'urdf', 'fullrobotassem.urdf')
-    
+    box_urdf_file = os.path.join(pkg_fullrobotassem, 'urdf', 'cardboard_box.urdf')
+
     # Đọc file URDF
     with open(urdf_file, 'r') as f:
         robot_desc = f.read()
-
+    
+    # Đọc file URDF thùng carton
+    with open(box_urdf_file, 'r') as f:
+        box_desc = f.read()
+    
     # 1. Mở Gazebo Sim với maze2.sdf
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -52,7 +57,7 @@ def generate_launch_description():
         }]
     )
 
-    # 3. Spawn Robot vào môi trường Gazebo
+    # 3. Spawn Robot, Cardboard Box vào môi trường Gazebo
     spawn_robot = Node(
         package='ros_gz_sim',
         executable='create',
@@ -62,6 +67,21 @@ def generate_launch_description():
             '-x', '0.0',
             '-y', '0.0',
             '-z', '0.2'
+        ],
+        output='screen'
+    )
+
+    box_sdf_file = os.path.join(pkg_fullrobotassem, 'urdf', 'cardboard_box.sdf')
+
+    spawn_box = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-file', box_sdf_file,
+            '-name', 'cardboard_box',
+            '-x', '0.0',
+            '-y', '0.5',
+            '-z', '0.15'
         ],
         output='screen'
     )
@@ -151,8 +171,8 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Dùng thời gian mô phỏng'),
         gazebo,
         robot_state_publisher,
-        # joint_state_publisher,
         spawn_robot,
+        spawn_box,
         bridge,
         slam_toolbox,
         rviz,

@@ -1,0 +1,72 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <model name="cardboard_box">
+    <!-- Chuyển sang false để vật thể chịu tác động của trọng lực và lực va chạm -->
+    <static>false</static>
+    
+    <link name="box_link">
+      <!-- Khai báo khối lượng và quán tính cho thùng (kích thước 0.4x0.3x0.3m, khối lượng 0.5kg) -->
+      <inertial>
+        <mass>0.5</mass>
+        <inertia>
+          <ixx>0.0075</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>0.0104</iyy>
+          <iyz>0.0</iyz>
+          <izz>0.0104</izz>
+        </inertia>
+      </inertial>
+
+      <!-- Khung va chạm và hệ số ma sát -->
+      <collision name="box_collision">
+        <geometry>
+          <box>
+            <size>0.4 0.3 0.3</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+
+      <!-- Visual cho thân thùng carton -->
+      <visual name="box_visual">
+        <geometry>
+          <box>
+            <size>0.4 0.3 0.3</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.82 0.71 0.55 1</ambient>
+          <diffuse>0.82 0.71 0.55 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Visual cho Mã QR trên mặt trên -->
+      <visual name="qr_code_visual">
+        <pose>0.1 0.08 0.151 0 0 0</pose>
+        <geometry>
+          <plane>
+            <normal>0 0 1</normal>
+            <size>0.1 0.1</size>
+          </plane>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <albedo_map>model://fullrobotassem/urdf/qr.png</albedo_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

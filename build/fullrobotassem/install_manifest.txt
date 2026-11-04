@@ -18,7 +18,10 @@
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/meshes/right_wheel.STL
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/meshes/left_shoulder.STL
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/urdf/fullrobotassem.urdf
+/home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/urdf/qr.png
+/home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/urdf/cardboard_box.sdf
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/urdf/fullrobotassem.csv
+/home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/urdf/cardboard_box.urdf
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/worlds/my_world.sdf
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/worlds/build/.built_by
 /home/khanhtrinh/trinh/ag/install/fullrobotassem/share/fullrobotassem/worlds/build/COLCON_IGNORE

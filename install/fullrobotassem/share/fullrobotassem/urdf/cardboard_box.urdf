@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<robot name="cardboard_box">
+  <!-- Thùng carton chính -->
+  <link name="box_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.0075" ixy="0" ixz="0" iyy="0.0104" iyz="0" izz="0.0104"/>
+    </inertial>
+
+    <!-- Visual cho thùng carton (màu nâu carton) -->
+    <visual name="box_visual">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.4 0.3 0.3"/>
+      </geometry>
+      <material name="carton_material">
+        <color rgba="0.82 0.71 0.55 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Va chạm vật lý -->
+    <collision name="box_collision">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.4 0.3 0.3"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Tấm nhãn dán mã QR 100x100mm ở góc mặt trước -->
+  <link name="qr_code_link">
+    <visual name="qr_visual">
+      <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <plane size="0.1 0.1"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="qr_code_joint" type="fixed">
+    <parent link="box_link"/>
+    <child link="qr_code_link"/>
+    <!-- Nhô ra nhẹ mặt trước (X=0.201m) và nằm ở góc trên bên phải của mặt thùng -->
+    <origin xyz="0.201 0.08 0.08" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Cấu hình Material PBR cho Gazebo Sim -->
+  <gazebo reference="qr_code_link">
+    <visual>
+      <material>
+        <diffuse>1 1 1 1</diffuse>
+        <pbr>
+          <metal>
+            <albedo_map>package://fullrobotassem/urdf/qr.png</albedo_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+
+  <gazebo reference="box_link">
+    <visual>
+      <material>
+        <diffuse>0.82 0.71 0.55 1</diffuse>
+        <ambient>0.82 0.71 0.55 1</ambient>
+      </material>
+    </visual>
+  </gazebo>
+</robot>
