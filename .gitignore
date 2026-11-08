@@ -12,3 +12,4 @@ src/fullrobotassem/wheel_center.py
 /model/runs/
 /model/venv/
 venv/
+/program/steppermotor/
