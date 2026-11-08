@@ -45,11 +45,34 @@
         <material>
           <ambient>0.82 0.71 0.55 1</ambient>
           <diffuse>0.82 0.71 0.55 1</diffuse>
+          <pbr>
+            <metal>
+              <albedo_map>model://fullrobotassem/urdf/cardboard_texture.png</albedo_map>
+            </metal>
+          </pbr>
         </material>
       </visual>
 
       <!-- Visual cho Mã QR trên mặt trên -->
-      <visual name="qr_code_visual">
+      <!-- <visual name="qr_code_visual">
+        <pose>0.1 0.08 0.151 0 0 0</pose>
+        <geometry>
+          <plane>
+            <normal>0 0 1</normal>
+            <size>0.1 0.1</size>
+          </plane>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <albedo_map>model://fullrobotassem/urdf/qr.png</albedo_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual> -->
+      <visual name="qr_code_visual_front">
         <pose>0.1 0.08 0.151 0 0 0</pose>
         <geometry>
           <plane>

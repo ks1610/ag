@@ -28,6 +28,8 @@ install(
   PROGRAMS 
     scripts/bluetooth_teleop.py 
     scripts/upper_body_panel.py
+    scripts/box_picker_node.py
+    scripts/request_pick.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

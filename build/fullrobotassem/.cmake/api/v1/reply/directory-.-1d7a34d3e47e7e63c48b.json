@@ -48,7 +48,7 @@
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 34,
+				"line" : 36,
 				"parent" : 0
 			},
 			{
@@ -251,7 +251,9 @@
 			"paths" : 
 			[
 				"scripts/bluetooth_teleop.py",
-				"scripts/upper_body_panel.py"
+				"scripts/upper_body_panel.py",
+				"scripts/box_picker_node.py",
+				"scripts/request_pick.py"
 			],
 			"type" : "file"
 		},
