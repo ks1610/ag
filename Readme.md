@@ -1,3 +1,7 @@
+# fullrobotassem (ag)
+
+ROS 2 Jazzy package for a differential-drive robot with arms, lift, and a 2D lidar. It runs in Gazebo simulation and, with the hardware bridge, on a Raspberry Pi 4 with an LD14 lidar.
+
 ## Workspace Structure
 
 ```text
@@ -77,17 +81,294 @@ ag/
 └── Readme.md
 ```
 
+## Requirements
 
+- Ubuntu 24.04 (Noble) on x86_64 for simulation, or Raspberry Pi 4 (64-bit Ubuntu 24.04) for the real robot
+- ROS 2 Jazzy
+- Gazebo Harmonic (installed through `ros-jazzy-ros-gz`) for simulation
+- Python 3.12 (the Ubuntu 24.04 default)
 
-ros2 topic pub --once /pick_box_request std_msgs/msg/String "{data: '{\"x\": 2.875, \"y\": 0.530, \"yaw\": 2.795, \"qr_code\": \"mmb-6769\"}'}"
+## 1. Install ROS 2 Jazzy
 
-__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep -i "opengl renderer"
+```bash
+sudo apt update && sudo apt install -y locales software-properties-common curl git
+sudo locale-gen en_US en_US.UTF-8
+sudo update-locale LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+sudo add-apt-repository universe -y
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+  -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" \
+| sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+sudo apt update
+sudo apt install -y ros-jazzy-desktop ros-dev-tools
+echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+source /opt/ros/jazzy/setup.bash
+```
+
+Use `ros-jazzy-ros-base` instead of `ros-jazzy-desktop` on a Raspberry Pi, where RViz can run on another computer.
+
+## 2. Install the ROS packages used by this project
+
+```bash
+sudo apt install -y \
+  ros-jazzy-ros-gz ros-jazzy-navigation2 ros-jazzy-nav2-bringup \
+  ros-jazzy-slam-toolbox ros-jazzy-robot-state-publisher \
+  ros-jazzy-joint-state-publisher-gui ros-jazzy-xacro \
+  ros-jazzy-teleop-twist-keyboard ros-jazzy-nav2-map-server \
+  python3-serial
+```
+
+`python3-serial` comes from apt because Ubuntu 24.04 blocks system-wide `pip install`.
+
+## 3. Clone and build
+
+The repo tracks generated `build/`, `install/`, and `log/` folders from another computer. Remove them before the first build so CMake doesn't reuse paths from that machine.
+
+```bash
+cd ~
+git clone https://github.com/ks1610/ag.git
+cd ~/ag
+rm -rf build install log
+
+rosdep init 2>/dev/null || true
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y
+
+colcon build --symlink-install
+source ~/ag/install/setup.bash
+```
+
+Add the source line to `~/.bashrc` if you use this workspace often:
+
+```bash
+echo "source ~/ag/install/setup.bash" >> ~/.bashrc
+```
+
+If `rosdep install` reports a missing key, install the named package with apt and rerun the build.
+
+---
+
+# PART A: Simulation (Gazebo, no real hardware)
+
+Open a new terminal for each step, and source the workspace in each one (`source ~/ag/install/setup.bash`).
+
+**Check the arguments of each launch file first.** This prints the arguments a launch file accepts, so you don't have to read the source:
+
+```bash
+ros2 launch fullrobotassem gazebo.launch.py --show-args
+ros2 launch fullrobotassem pick_and_place.launch.py --show-args
+```
+
+Repeat for `mapping.launch.py`, `nav2_auto.launch.py`, and `maze_navigation.launch.py` as needed.
+
+**Robot model only (no Gazebo):**
+
+```bash
+ros2 launch fullrobotassem display.launch.py
+```
+
+This starts `robot_state_publisher`, `joint_state_publisher_gui` (joint sliders), and RViz.
+
+**Gazebo simulation:**
+
+```bash
+ros2 launch fullrobotassem gazebo.launch.py
+```
+
+**Mapping with slam_toolbox (in simulation):**
+
+```bash
+ros2 launch fullrobotassem mapping.launch.py
+```
+
+To drive the robot while mapping, open another terminal and run:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+**Autonomous navigation with Nav2:**
+
+```bash
+ros2 launch fullrobotassem nav2_auto.launch.py
+```
+
+**Maze navigation:**
+
+```bash
+ros2 launch fullrobotassem maze_navigation.launch.py
+```
+
+**Pick and place (box pickup request):**
+
+```bash
 ros2 launch fullrobotassem pick_and_place.launch.py pick_x:=2.875 pick_y:=0.530 pick_yaw:=2.795
+```
 
-python3 request_pick.py --qr mmb-6769
+In another terminal, send a pick request either way:
 
+```bash
+ros2 topic pub --once /pick_box_request std_msgs/msg/String \
+  "{data: '{\"x\": 2.875, \"y\": 0.530, \"yaw\": 2.795, \"qr_code\": \"mmb-6769\"}'}"
 
-# Real-robot bridge: Raspberry Pi → Arduino 1 (UART) → Arduino 2 (I2C)
+python3 ~/ag/src/fullrobotassem/scripts/request_pick.py --qr mmb-6769
+```
+
+**Graphics note:** On a laptop with NVIDIA Optimus graphics, Gazebo may need GPU offload. Check the renderer with:
+
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep -i "opengl renderer"
+```
+
+Then prefix the launch command with the same two variables. On other machines, skip this.
+
+---
+
+# PART B: Real robot (Raspberry Pi 4 + LD14 lidar)
+
+This part sets up the LD14 lidar and shows its scan in RViz. The motors and wheels need the hardware bridge described below.
+
+### B.1 Connect the sensor
+
+- Power the LD14 from a 5 V supply that can deliver enough current. A powered USB hub or a separate supply works better than the Pi's USB port.
+- Connect the sensor's data lines to a CP2102 USB-serial adapter: **sensor TX → adapter RX**, and share the ground between the sensor, adapter, and Pi.
+- Plug the adapter into the Pi. Confirm the device name:
+
+```bash
+ls -l /dev/ttyUSB*
+sudo dmesg | tail -5        # should show "cp210x converter now attached to ttyUSB0"
+```
+
+- Give your user access to the serial port (log out and back in afterward):
+
+```bash
+sudo usermod -aG dialout $USER
+```
+
+- Optional: create a stable name `/dev/ldlidar` with a udev rule. Find the IDs with `udevadm info -a -n /dev/ttyUSB0`, then:
+
+```bash
+sudo tee /etc/udev/rules.d/99-ldlidar.rules > /dev/null <<'EOF'
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ldlidar", MODE="0666"
+EOF
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+### B.2 Test the raw data before ROS
+
+This check confirms the baud rate. The `0x54` byte is the LD14 packet header.
+
+```bash
+python3 - <<'EOF'
+import serial
+for baud in (115200, 230400):
+    s = serial.Serial('/dev/ttyUSB0', baud, timeout=1)
+    data = s.read(2000)
+    s.close()
+    print(f"{baud}: {len(data)} bytes, header 0x54 found: {0x54 in data}")
+EOF
+```
+
+Use the baud rate that reports `header 0x54 found: True`. In testing with this robot's sensor, that was 115200.
+
+### B.3 Install the LD14 ROS 2 driver
+
+The workspace used for testing is `~/ros2_ws`, with the driver package `ldlidar_sl_ros2` in its `src` folder:
+
+```bash
+mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
+git clone <LDLIDAR_DRIVER_REPOSITORY_URL> ldlidar_sl_ros2
+cd ~/ros2_ws
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install
+source ~/ros2_ws/install/setup.bash
+```
+
+Replace `<LDLIDAR_DRIVER_REPOSITORY_URL>` with the URL of the LDROBOT ROS 2 driver you use. The folder name must match the package name in its `package.xml`. Check it with `grep -m1 "<name>" ~/ros2_ws/src/ldlidar_sl_ros2/package.xml`.
+
+### B.4 Set the port, baud rate, and frame
+
+Open `~/ros2_ws/src/ldlidar_sl_ros2/launch/ld14.launch.py` and check these values:
+
+| Parameter | Value |
+|---|---|
+| `port_name` | `/dev/ttyUSB0` (or `/dev/ldlidar` if you created the udev rule) |
+| `serial_baudrate` | `115200` for this sensor (from step B.2) |
+| `frame_id` | `lidar_link` (matches the URDF) |
+| `laser_scan_topic_name` | `scan` |
+
+The URDF defines `lidar_link` through `lidar_joint`, so the driver should not also publish a static `base_link → base_laser` transform. Remove any static transform for the lidar from the driver's launch file. Then rebuild:
+
+```bash
+cd ~/ros2_ws
+colcon build --packages-select ldlidar_sl_ros2 --symlink-install
+source install/setup.bash
+```
+
+### B.5 Run the lidar
+
+Terminal 1, keep it open while you use the lidar:
+
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 launch ldlidar_sl_ros2 ld14.launch.py
+```
+
+Look for `ldlidar node start is success` in the output. If you see `serial is not open`, check the port with `ls -l /dev/ttyUSB*`.
+
+Terminal 2, check the data:
+
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 topic list | grep scan
+timeout 10 ros2 topic hz /scan                                  # about 6 Hz
+timeout 10 ros2 topic echo /scan --once --field header.frame_id # lidar_link
+```
+
+### B.6 Show the robot and lidar in RViz
+
+Start the lidar first (B.5), then open a new terminal:
+
+```bash
+source ~/ros2_ws/install/setup.bash
+source ~/ag/install/setup.bash
+ros2 launch fullrobotassem display.launch.py
+```
+
+In RViz:
+
+1. **Global Options → Fixed Frame:** `base_footprint`.
+2. **Add → RobotModel:** Description Source `Topic`, Description Topic `/robot_description`.
+3. **Add → LaserScan:** Topic `/scan`. Set Size to `0.03`, Position Transformer to `XYZ`, and Color Transformer to `FlatColor` (set the color to red) or `Intensity`.
+4. **Views → Target Frame:** `lidar_link`, with Distance around `1.5` to focus on the sensor.
+5. **File → Save Config As:** save as `~/robot_model.rviz`. Reopen it later with:
+
+```bash
+rviz2 -d ~/robot_model.rviz
+```
+
+Check the TF link if the scan appears in the wrong place:
+
+```bash
+timeout 5 ros2 run tf2_ros tf2_echo base_footprint lidar_link
+```
+
+Expect a transform with a translation of about `0.14 0.00 0.16` in the setup tested here. The `Invalid frame ID` line that may appear first is a startup message, not an error.
+
+### B.7 Startup order
+
+1. Power the lidar and confirm the port.
+2. Start the lidar driver (B.5).
+3. Start `display.launch.py` (B.6).
+4. Start the hardware bridge (below), when it is available.
+
+---
+
+# PART C: Hardware bridge (Raspberry Pi → Arduino)
 
 Replaces, on real hardware, what `ros_gz_bridge` + `bridge.yaml` did in
 Gazebo: it is the only piece that talks to actual motors/servos.
@@ -99,14 +380,14 @@ ROS2 (Pi)  --UART 115200--> Arduino 1 (master) --I2C 100kHz--> Arduino 2 (slave)
                           BTS7960 #3 (lift) + 2 limit sw.          (wheels + encoders)
 ```
 
-## Files
+### Files
 | File | Runs on | Purpose |
 |---|---|---|
 | `arduino1_master.ino` | Arduino 1 | UART bridge to the Pi, drives arm servos + lift motor, I2C master to Arduino 2 |
 | `arduino2_slave.ino` | Arduino 2 | I2C slave, closed-loop wheel speed control + quadrature encoders |
 | `hardware_bridge_node.py` | Raspberry Pi (ROS2) | Subscribes to `/cmd_vel`, `/left_arm/cmd_pos`, `/right_arm/cmd_pos`, `/upper_body/cmd_pos`; publishes `/odom`, `/joint_states`, limit-switch/lift status |
 
-## Wiring (from `ketnoi.xlsx`)
+### Wiring (from `ketnoi.xlsx`)
 
 **Arduino 1 (Master)**
 | Component | Pin | Arduino 1 pin |
@@ -133,29 +414,64 @@ ROS2 (Pi)  --UART 115200--> Arduino 1 (master) --I2C 100kHz--> Arduino 2 (slave)
   divider** — the Pi's GPIO is 3.3V-only and Arduino runs at 5V.
 - Common ground between Pi and both Arduinos.
 
-## Protocols
+### Protocols
 See the header comments in `arduino1_master.ino` (UART ASCII lines) and
 `arduino2_slave.ino` (I2C byte format) for the exact message layout.
 
-## Things you must calibrate before trusting the odometry / lift speed
-- `TICKS_PER_REV` in `arduino2_slave.ino` — depends on your JGA37 gearbox
-  and how it's wired (channel-A-only, both edges). Spin one wheel exactly
-  one revolution by hand and count ticks to get the real value, then
-  mirror the same number in `hardware_bridge_node.py`'s `_update_odometry`.
-- `KP` / `KI` in `arduino2_slave.ino` — start low, raise until the wheel
+### Calibration before trusting odometry or lift speed
+- `TICKS_PER_REV` in `arduino2_slave.ino`: spin one wheel exactly one
+  revolution by hand, count the ticks, and mirror the value in
+  `hardware_bridge_node.py`'s `_update_odometry`.
+- `KP` / `KI` in `arduino2_slave.ino`: start low, raise until the wheel
   tracks a step speed command without much overshoot.
-- `LIFT_PWM_SPEED` / `LIFT_TIMEOUT_MS` in `arduino1_master.ino` — set the
-  timeout comfortably longer than the real travel time between limit
-  switches.
+- `LIFT_PWM_SPEED` / `LIFT_TIMEOUT_MS` in `arduino1_master.ino`: set the
+  timeout longer than the real travel time between limit switches.
 
-## Deploying
+### Deploying
 1. Flash `arduino1_master.ino` to Arduino 1 and `arduino2_slave.ino` to
    Arduino 2 (Arduino IDE; `arduino1_master.ino` needs the *Adafruit PWM
-   Servo Driver Library* installed).
+   Servo Driver Library*).
 2. Wire everything per the tables above.
-3. On the Pi, install `pyserial` (`pip install pyserial`) and add
-   `hardware_bridge_node.py` as a `Node` in your real-robot launch file —
-   in place of the `ros_gz_sim`/bridge nodes that `pick_and_place.launch.py`
-   uses for simulation. `box_picker_node.py` and `request_pick.py` need no
-   changes: they already publish/subscribe the exact topics this bridge
-   speaks.
+3. On the Pi, add `hardware_bridge_node.py` as a `Node` in your real-robot
+   launch file, in place of the `ros_gz_sim`/bridge nodes used by
+   `pick_and_place.launch.py` in simulation. `box_picker_node.py` and
+   `request_pick.py` need no changes.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `CMakeCache.txt directory ... is different` | Remove `build/ install/ log/` in `~/ag` and rebuild. |
+| `Package 'xxx' not found` | Source `install/setup.bash` in this terminal, and check the package name with `ros2 pkg list`. |
+| `serial is not open` in the lidar log | Wrong port in `ld14.launch.py`, or no permission. Check `ls -l /dev/ttyUSB*` and the `dialout` group. |
+| `/scan` publishes but RViz shows nothing | Set LaserScan Size to `0.03`, Color Transformer, and Target Frame `lidar_link`. |
+| RobotModel missing in RViz | Set Description Topic to `/robot_description` and Fixed Frame to `base_footprint`. |
+| TF frame missing | Make sure `display.launch.py` is running, and that only one source publishes `base_link → lidar_link`. |
+| Gazebo window is black or very slow | Use the GPU offload command in Part A, or lower the simulation rate. |
+
+## Known gaps in this repo
+
+- `hardware_bridge_node.py` is described in Part C but is not in `src/fullrobotassem/scripts/`.
+- The Arduino sketches are named `arduino1.ino` / `arduino2.ino` in `program/main/`, while this README refers to `arduino1_master.ino` / `arduino2_slave.ino`.
+- `display.launch.py` contains a comment that says `cd ~/trinh/ag`. Use `~/ag` instead.
+
+## Wiring (from `ketnoi.xlsx`)
+
+**Arduino 1 (Master)**
+| Component | Pin | Arduino 1 pin |
+|---|---|---|
+| PCA9685 | SDA / SCL | A4 / A5 |
+| BTS7960 #3 (lift) | EN | 5V (always on) |
+| BTS7960 #3 (lift) | RPWM / LPWM | D5 / D6 |
+| Button #1 (upper limit) | OUT | D2 |
+| Button #2 (lower limit) | OUT | D3 |
+| Arduino 2 | SDA / SCL | A4 / A5 (shared bus) |
+
+**Arduino 2 (Slave)**
+| Component | Pin | Arduino 2 pin |
+|---|---|---|
+| BTS7960 #1 (left wheel) | EN / RPWM / LPWM | D5 / D4 / D6 |
+| BTS7960 #2 (right wheel) | EN / RPWM / LPWM | D11 / D12 / D10 |
+| JGA37 #1 (left) encoder | Ch A / Ch B | D2 (INT0) / D7 |
+| JGA37 #2 (right) encoder | Ch A / Ch B | D3 (INT1) / D8 |
+| Arduino 1 | SDA / SCL | A4 / A5 (shared bus) |
