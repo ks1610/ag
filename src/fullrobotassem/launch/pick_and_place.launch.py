@@ -1,3 +1,9 @@
+# ros2 topic pub --once /pick_box_request std_msgs/msg/String "{data: '{\"x\": 2.875, \"y\": 0.530, \"yaw\": 2.795, \"qr_code\": \"mmb-6769\"}'}"
+
+# __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep -i "opengl renderer"
+# ros2 launch fullrobotassem pick_and_place.launch.py pick_x:=2.875 pick_y:=0.530 pick_yaw:=2.795
+
+
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
