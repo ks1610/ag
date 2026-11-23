@@ -37,8 +37,8 @@ amcl:
     z_rand: 0.5
     z_short: 0.05
     scan_topic: scan
-    set_initial_pose: true
-    always_reset_initial_pose: true
+    set_initial_pose: false
+    always_reset_initial_pose: false
     initial_pose:
       x: 0.0
       y: 0.0
@@ -100,10 +100,10 @@ controller_server:
       vx_std: 0.1
       vy_std: 0.2
       wz_std: 0.3
-      vx_max: 0.75
-      vx_min: -0.45
-      vy_max: 0.5
-      wz_max: 3.6
+      vx_max: 0.2
+      vx_min: -0.1
+      vy_max: 0.0
+      wz_max: 1.0
       iteration_count: 1
       prune_distance: 1.7
       transform_tolerance: 0.1
@@ -354,13 +354,13 @@ velocity_smoother:
     scale_velocities: false
     feedback: OPEN_LOOP
     max_velocity:
-    - 0.9
+    - 0.2
     - 0.0
-    - 4.0
+    - 1.0
     min_velocity:
-    - -0.55
+    - -0.1
     - 0.0
-    - -4.0
+    - -1.0
     max_accel:
     - 1.8
     - 0.0
