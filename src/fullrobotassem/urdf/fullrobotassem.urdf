@@ -53,9 +53,9 @@
   </link>
 
   <joint name="lidar_joint" type="fixed">
-    <origin xyz="0.19 0.235 -0.02" rpy="0 0 0" />
-    <parent link="base_link" />
-    <child link="lidar_link" />
+      <origin xyz="0.19 0.235 -0.02" rpy="0 0 3.14159265" />
+      <parent link="base_link" />
+      <child link="lidar_link" />
   </joint>
 
   <link name="upper_body">
