@@ -1,20 +1,29 @@
 /*
- * arduino2_slave.ino  (v2 — fixes forward direction, see comments below)
+ * arduino2_slave.ino  (v3)
  * ---------------------------------------------------------------------
- * Role: ARDUINO 2 (Slave)
+ * Role: ARDUINO 2 (Slave), I2C address 0x08. USB used only for debug.
  *
- * HARDWARE NOTE (confirmed against the working standalone test sketch):
- *   RPWM pins (D4 left, D12 right) are NOT PWM-capable on this wiring —
- *   analogWrite() on them silently falls back to HIGH/LOW. So forward
- *   drive is on/off only (full speed when active), same as the proven
- *   test sketch effectively did. LPWM pins (D6 left, D10 right) ARE
- *   real PWM pins, so backward drive gets true variable speed, with a
- *   minimum-duty floor (MIN_EFFECTIVE_PWM) so a modest commanded speed
- *   can't land below the duty the motor needs to actually start moving.
+ * v3 FIXES
+ *  - onI2CRequest() no longer calls noInterrupts()/interrupts(). That code
+ *    runs inside the TWI interrupt; calling interrupts() there re-entered
+ *    the handler recursively and hung the I2C bus (SCL held low).
+ *  - Watchdog reads lastI2cCmdMs atomically and prints only once.
+ *  - Debug printing is rate-limited; ENC totals printed for verification.
+ *
+ * Motor behaviour is unchanged from the version that moved the robot:
+ *   Forward  : RPWM pin (D4/D12, not PWM-capable) = digital HIGH (full speed)
+ *   Backward : LPWM pin (D6/D10, PWM) = analogWrite, floor MIN_EFFECTIVE_PWM
+ *
+ * I2C protocol (Arduino1 = master):
+ *   Write 5 bytes: [0x10, leftMMs_hi, leftMMs_lo, rightMMs_hi, rightMMs_lo]
+ *   Write 2 bytes: [0x30, enable]
+ *   Read  8 bytes: [leftTicks(int32 BE), rightTicks(int32 BE)] = delta since
+ *                  the previous read (counters advance on every read).
  * ---------------------------------------------------------------------
  */
 
 #include <Wire.h>
+#include <util/atomic.h>
 
 // =======================================================================
 // Configuration
@@ -22,26 +31,25 @@
 static const uint8_t I2C_SLAVE_ADDR = 0x08;
 
 static const uint8_t PIN_L_EN    = 5;
-static const uint8_t PIN_L_RPWM  = 4;   // NOT PWM-capable -> digital only
+static const uint8_t PIN_L_RPWM  = 4;   // digital only
 static const uint8_t PIN_L_LPWM  = 6;   // PWM-capable
 static const uint8_t PIN_L_ENC_A = 2;   // INT0
 static const uint8_t PIN_L_ENC_B = 7;
 
 static const uint8_t PIN_R_EN    = 11;
-static const uint8_t PIN_R_RPWM  = 12;  // NOT PWM-capable -> digital only
+static const uint8_t PIN_R_RPWM  = 12;  // digital only
 static const uint8_t PIN_R_LPWM  = 10;  // PWM-capable
 static const uint8_t PIN_R_ENC_A = 3;   // INT1
 static const uint8_t PIN_R_ENC_B = 8;
 
 static const float MAX_WHEEL_SPEED_MMS = 400.0f;
 static const int   PWM_MAX = 255;
-// Floor duty for the PWM (backward) side, close to the values your
-// proven sketch used (150-160), so any nonzero command actually moves
-// the motor instead of landing in a too-weak-to-turn duty range.
 static const int   MIN_EFFECTIVE_PWM = 110;
 
 static const unsigned long CONTROL_PERIOD_MS = 20;
 static const unsigned long CMD_TIMEOUT_MS    = 500;
+static const unsigned long DEBUG_MIN_PERIOD_MS = 1000;  // max rate of "Received" prints
+static const unsigned long ENC_PRINT_PERIOD_MS = 500;
 
 // =======================================================================
 // State
@@ -49,8 +57,9 @@ static const unsigned long CMD_TIMEOUT_MS    = 500;
 volatile long encTicksLeft  = 0;
 volatile long encTicksRight = 0;
 
-long encSnapshotLeftForI2C  = 0;
-long encSnapshotRightForI2C = 0;
+// Only touched inside onI2CRequest() (interrupt context).
+long encSnapshotLeft  = 0;
+long encSnapshotRight = 0;
 
 volatile int16_t targetLeftMMs  = 0;
 volatile int16_t targetRightMMs = 0;
@@ -58,6 +67,7 @@ volatile bool    motorsEnabled  = true;
 volatile bool    i2cLinkEstablished = false;
 volatile unsigned long lastI2cCmdMs = 0;
 
+// ISR -> loop() debug hand-off
 volatile bool    debugNewMsgFlag  = false;
 volatile uint8_t debugCmd         = 0;
 volatile int16_t debugTargetLeft  = 0;
@@ -65,9 +75,14 @@ volatile int16_t debugTargetRight = 0;
 volatile uint8_t debugNumBytes    = 0;
 
 unsigned long lastControlMs = 0;
+unsigned long lastDebugPrintMs = 0;
+unsigned long lastEncPrintMs = 0;
+int16_t lastPrintedLeft = 0, lastPrintedRight = 0;
+long lastPrintedEncL = 0, lastPrintedEncR = 0;
+bool watchdogTripped = false;
 
 // =======================================================================
-// Encoder ISRs
+// Encoder ISRs (channel-A RISING, channel-B gives direction)
 // =======================================================================
 void isrLeftEncoder() {
   if (digitalRead(PIN_L_ENC_B) == LOW) encTicksLeft++;
@@ -81,10 +96,6 @@ void isrRightEncoder() {
 
 // =======================================================================
 // Motor driver
-//   Forward (speedMMs > 0): RPWM pin driven as plain digital HIGH (the
-//     pin can't PWM anyway) — full-speed-only, same as proven behavior.
-//   Backward (speedMMs < 0): LPWM pin gets real analogWrite PWM, scaled
-//     between MIN_EFFECTIVE_PWM and PWM_MAX.
 // =======================================================================
 void setWheelSpeed(uint8_t enPin, uint8_t rpwmPin, uint8_t lpwmPin, int16_t speedMMs) {
   bool active = i2cLinkEstablished && motorsEnabled;
@@ -97,10 +108,7 @@ void setWheelSpeed(uint8_t enPin, uint8_t rpwmPin, uint8_t lpwmPin, int16_t spee
   }
 
   if (speedMMs > 0) {
-    // Forward: digital-only pin -> full on. (No partial speed possible
-    // here without rewiring RPWM to a PWM-capable pin or moving speed
-    // control onto the EN pin instead — see note at the end.)
-    digitalWrite(rpwmPin, HIGH);
+    digitalWrite(rpwmPin, HIGH);        // forward: full speed (pin can't PWM)
     analogWrite(lpwmPin, 0);
   } else {
     long mag = constrain((long)abs(speedMMs), 0L, (long)MAX_WHEEL_SPEED_MMS);
@@ -130,26 +138,38 @@ void updateMotors() {
     return;
   }
 
-  if (now - lastI2cCmdMs > CMD_TIMEOUT_MS) {
-    noInterrupts();
-    targetLeftMMs = 0;
-    targetRightMMs = 0;
-    interrupts();
-    Serial.println("!! Watchdog: no I2C command for 500ms -> forcing stop.");
+  // Watchdog: atomic copy of the ISR-written timestamp, signed difference.
+  unsigned long lastCmd;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { lastCmd = lastI2cCmdMs; }
+
+  if ((long)(now - lastCmd) > (long)CMD_TIMEOUT_MS) {
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      targetLeftMMs = 0;
+      targetRightMMs = 0;
+    }
+    if (!watchdogTripped) {
+      Serial.println("!! Watchdog: no I2C command for 500ms -> stopped.");
+      watchdogTripped = true;
+    }
+  } else {
+    watchdogTripped = false;
   }
 
   int16_t tgtLeft, tgtRight;
-  noInterrupts();
-  tgtLeft = targetLeftMMs;
-  tgtRight = targetRightMMs;
-  interrupts();
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    tgtLeft = targetLeftMMs;
+    tgtRight = targetRightMMs;
+  }
 
   setWheelSpeed(PIN_L_EN, PIN_L_RPWM, PIN_L_LPWM, tgtLeft);
   setWheelSpeed(PIN_R_EN, PIN_R_RPWM, PIN_R_LPWM, tgtRight);
 }
 
 // =======================================================================
-// I2C callbacks — KEEP THESE FAST, no Serial calls in here.
+// I2C callbacks. Both run INSIDE the TWI interrupt:
+//   - keep them short
+//   - NO Serial calls
+//   - NEVER call interrupts()/sei() here
 // =======================================================================
 void onI2CReceive(int numBytes) {
   if (numBytes <= 0) return;
@@ -187,24 +207,85 @@ void onI2CReceive(int numBytes) {
 }
 
 void onI2CRequest() {
-  long left, right;
-  noInterrupts();
-  left  = encTicksLeft  - encSnapshotLeftForI2C;
-  right = encTicksRight - encSnapshotRightForI2C;
-  encSnapshotLeftForI2C  = encTicksLeft;
-  encSnapshotRightForI2C = encTicksRight;
-  interrupts();
+  // Other interrupts (encoders) are already masked while we are in this
+  // handler, so these reads are atomic without touching the interrupt flag.
+  long curLeft  = encTicksLeft;
+  long curRight = encTicksRight;
+  long dLeft  = curLeft  - encSnapshotLeft;
+  long dRight = curRight - encSnapshotRight;
+  encSnapshotLeft  = curLeft;
+  encSnapshotRight = curRight;
 
   uint8_t buf[8];
-  buf[0] = (uint8_t)((left >> 24) & 0xFF);
-  buf[1] = (uint8_t)((left >> 16) & 0xFF);
-  buf[2] = (uint8_t)((left >> 8) & 0xFF);
-  buf[3] = (uint8_t)(left & 0xFF);
-  buf[4] = (uint8_t)((right >> 24) & 0xFF);
-  buf[5] = (uint8_t)((right >> 16) & 0xFF);
-  buf[6] = (uint8_t)((right >> 8) & 0xFF);
-  buf[7] = (uint8_t)(right & 0xFF);
+  buf[0] = (uint8_t)((dLeft >> 24) & 0xFF);
+  buf[1] = (uint8_t)((dLeft >> 16) & 0xFF);
+  buf[2] = (uint8_t)((dLeft >> 8) & 0xFF);
+  buf[3] = (uint8_t)(dLeft & 0xFF);
+  buf[4] = (uint8_t)((dRight >> 24) & 0xFF);
+  buf[5] = (uint8_t)((dRight >> 16) & 0xFF);
+  buf[6] = (uint8_t)((dRight >> 8) & 0xFF);
+  buf[7] = (uint8_t)(dRight & 0xFF);
   Wire.write(buf, 8);
+}
+
+// =======================================================================
+// Debug printing (main loop only)
+// =======================================================================
+void printDebug() {
+  unsigned long now = millis();
+
+  if (debugNewMsgFlag) {
+    uint8_t cmd, n;
+    int16_t left, right;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      cmd = debugCmd;
+      left = debugTargetLeft;
+      right = debugTargetRight;
+      n = debugNumBytes;
+      debugNewMsgFlag = false;
+    }
+
+    bool changed = (left != lastPrintedLeft) || (right != lastPrintedRight);
+    if (changed || (now - lastDebugPrintMs >= DEBUG_MIN_PERIOD_MS)) {
+      lastDebugPrintMs = now;
+      lastPrintedLeft = left;
+      lastPrintedRight = right;
+
+      Serial.print("Received from Arduino 1: ");
+      if (cmd == 0x10) {
+        Serial.print("CMD_SET_VEL left=");
+        Serial.print(left);
+        Serial.print("mm/s right=");
+        Serial.print(right);
+        Serial.println("mm/s");
+      } else if (cmd == 0x30) {
+        Serial.print("CMD_SET_ENABLE enabled=");
+        Serial.println(motorsEnabled ? 1 : 0);
+      } else {
+        Serial.print("unknown cmd=0x");
+        Serial.print(cmd, HEX);
+        Serial.print(" numBytes=");
+        Serial.println(n);
+      }
+    }
+  }
+
+  if (now - lastEncPrintMs >= ENC_PRINT_PERIOD_MS) {
+    lastEncPrintMs = now;
+    long l, r;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      l = encTicksLeft;
+      r = encTicksRight;
+    }
+    if (l != lastPrintedEncL || r != lastPrintedEncR) {   // only while moving
+      lastPrintedEncL = l;
+      lastPrintedEncR = r;
+      Serial.print("ENC total left=");
+      Serial.print(l);
+      Serial.print(" right=");
+      Serial.println(r);
+    }
+  }
 }
 
 // =======================================================================
@@ -212,7 +293,6 @@ void onI2CRequest() {
 // =======================================================================
 void setup() {
   Serial.begin(115200);
-  while (!Serial) { ; }
 
   pinMode(PIN_L_EN, OUTPUT);
   pinMode(PIN_L_RPWM, OUTPUT);
@@ -234,37 +314,10 @@ void setup() {
   Wire.onRequest(onI2CRequest);
 
   lastControlMs = millis();
-
-  Serial.println("ARDUINO2_SLAVE_READY (addr 0x08), waiting for I2C...");
+  Serial.println("ARDUINO2_SLAVE_V3_READY (addr 0x08), waiting for I2C...");
 }
 
 void loop() {
-  if (debugNewMsgFlag) {
-    noInterrupts();
-    uint8_t cmd = debugCmd;
-    int16_t left = debugTargetLeft;
-    int16_t right = debugTargetRight;
-    uint8_t n = debugNumBytes;
-    debugNewMsgFlag = false;
-    interrupts();
-
-    Serial.print("Received from Arduino 1: ");
-    if (cmd == 0x10) {
-      Serial.print("CMD_SET_VEL left=");
-      Serial.print(left);
-      Serial.print("mm/s right=");
-      Serial.print(right);
-      Serial.println("mm/s");
-    } else if (cmd == 0x30) {
-      Serial.print("CMD_SET_ENABLE enabled=");
-      Serial.println(motorsEnabled ? 1 : 0);
-    } else {
-      Serial.print("unknown cmd=0x");
-      Serial.print(cmd, HEX);
-      Serial.print(" numBytes=");
-      Serial.println(n);
-    }
-  }
-
+  printDebug();
   updateMotors();
 }
