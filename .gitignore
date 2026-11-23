@@ -13,3 +13,16 @@ src/fullrobotassem/wheel_center.py
 /model/venv/
 venv/
 /program/device/steppermotor/
+
+# ROS 2 / Colcon generated files
+build/
+install/
+log/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Editor files
+.vscode/
+.idea/
