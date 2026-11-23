@@ -1,54 +1,64 @@
-/*
- * arduino2_slave.ino  (v3)
- * ---------------------------------------------------------------------
- * Role: ARDUINO 2 (Slave), I2C address 0x08. USB used only for debug.
- *
- * v3 FIXES
- *  - onI2CRequest() no longer calls noInterrupts()/interrupts(). That code
- *    runs inside the TWI interrupt; calling interrupts() there re-entered
- *    the handler recursively and hung the I2C bus (SCL held low).
- *  - Watchdog reads lastI2cCmdMs atomically and prints only once.
- *  - Debug printing is rate-limited; ENC totals printed for verification.
- *
- * Motor behaviour is unchanged from the version that moved the robot:
- *   Forward  : RPWM pin (D4/D12, not PWM-capable) = digital HIGH (full speed)
- *   Backward : LPWM pin (D6/D10, PWM) = analogWrite, floor MIN_EFFECTIVE_PWM
- *
- * I2C protocol (Arduino1 = master):
- *   Write 5 bytes: [0x10, leftMMs_hi, leftMMs_lo, rightMMs_hi, rightMMs_lo]
- *   Write 2 bytes: [0x30, enable]
- *   Read  8 bytes: [leftTicks(int32 BE), rightTicks(int32 BE)] = delta since
- *                  the previous read (counters advance on every read).
- * ---------------------------------------------------------------------
- */
+// /*
+//  * arduino2_slave.ino  (v3)
+//  * ---------------------------------------------------------------------
+//  * Role: ARDUINO 2 (Slave), I2C address 0x08. USB used only for debug.
+//  *
+//  * v3 FIXES
+//  *  - onI2CRequest() no longer calls noInterrupts()/interrupts(). That code
+//  *    runs inside the TWI interrupt; calling interrupts() there re-entered
+//  *    the handler recursively and hung the I2C bus (SCL held low).
+//  *  - Watchdog reads lastI2cCmdMs atomically and prints only once.
+//  *  - Debug printing is rate-limited; ENC totals printed for verification.
+//  *
+//  * Motor behaviour is unchanged from the version that moved the robot:
+//  *   Forward  : RPWM pin (D4/D12, not PWM-capable) = digital HIGH (full speed)
+//  *   Backward : LPWM pin (D6/D10, PWM) = analogWrite, floor MIN_EFFECTIVE_PWM
+//  *
+//  * I2C protocol (Arduino1 = master):
+//  *   Write 5 bytes: [0x10, leftMMs_hi, leftMMs_lo, rightMMs_hi, rightMMs_lo]
+//  *   Write 2 bytes: [0x30, enable]
+//  *   Read  8 bytes: [leftTicks(int32 BE), rightTicks(int32 BE)] = delta since
+//  *                  the previous read (counters advance on every read).
+//  * ---------------------------------------------------------------------
+//  */
 
 #include <Wire.h>
 #include <util/atomic.h>
 
 // =======================================================================
-// Configuration
+// Configuration (pins unchanged from current wiring)
 // =======================================================================
 static const uint8_t I2C_SLAVE_ADDR = 0x08;
 
 static const uint8_t PIN_L_EN    = 5;
-static const uint8_t PIN_L_RPWM  = 4;   // digital only
-static const uint8_t PIN_L_LPWM  = 6;   // PWM-capable
-static const uint8_t PIN_L_ENC_A = 2;   // INT0
+static const uint8_t PIN_L_RPWM  = 4;    // forward, software PWM (PD4)
+static const uint8_t PIN_L_LPWM  = 6;    // backward, hardware PWM
+static const uint8_t PIN_L_ENC_A = 2;    // INT0
 static const uint8_t PIN_L_ENC_B = 7;
 
 static const uint8_t PIN_R_EN    = 11;
-static const uint8_t PIN_R_RPWM  = 12;  // digital only
-static const uint8_t PIN_R_LPWM  = 10;  // PWM-capable
-static const uint8_t PIN_R_ENC_A = 3;   // INT1
+static const uint8_t PIN_R_RPWM  = 12;   // forward, software PWM (PB4)
+static const uint8_t PIN_R_LPWM  = 10;   // backward, hardware PWM
+static const uint8_t PIN_R_ENC_A = 3;    // INT1
 static const uint8_t PIN_R_ENC_B = 8;
 
 static const float MAX_WHEEL_SPEED_MMS = 400.0f;
-static const int   PWM_MAX = 255;
-static const int   MIN_EFFECTIVE_PWM = 110;
+static const int   PWM_MAX           = 255;
+static const int   MIN_EFFECTIVE_PWM = 110;   // 0-255 scale, used for both directions
 
-static const unsigned long CONTROL_PERIOD_MS = 20;
-static const unsigned long CMD_TIMEOUT_MS    = 500;
-static const unsigned long DEBUG_MIN_PERIOD_MS = 1000;  // max rate of "Received" prints
+// Software PWM for forward: 64 steps at about 496 Hz.
+static const uint8_t SW_STEPS    = 64;
+static const long    SW_MIN_DUTY = MIN_EFFECTIVE_PWM / 4;   // same starting point as backward
+
+// Per-wheel, per-direction gains (1.0 = no change). Use these to correct drift.
+static const float GAIN_LEFT_FWD  = 1.00f;
+static const float GAIN_RIGHT_FWD = 1.00f;
+static const float GAIN_LEFT_BWD  = 1.00f;
+static const float GAIN_RIGHT_BWD = 1.00f;
+
+static const unsigned long CONTROL_PERIOD_MS   = 20;
+static const unsigned long CMD_TIMEOUT_MS      = 500;
+static const unsigned long DEBUG_MIN_PERIOD_MS = 1000;
 static const unsigned long ENC_PRINT_PERIOD_MS = 500;
 
 // =======================================================================
@@ -67,6 +77,11 @@ volatile bool    motorsEnabled  = true;
 volatile bool    i2cLinkEstablished = false;
 volatile unsigned long lastI2cCmdMs = 0;
 
+// Software PWM state (written by the Timer2 ISR)
+volatile uint8_t swPhase = 0;
+volatile uint8_t swDutyL = 0;   // 0..SW_STEPS, 0 = off
+volatile uint8_t swDutyR = 0;
+
 // ISR -> loop() debug hand-off
 volatile bool    debugNewMsgFlag  = false;
 volatile uint8_t debugCmd         = 0;
@@ -82,7 +97,7 @@ long lastPrintedEncL = 0, lastPrintedEncR = 0;
 bool watchdogTripped = false;
 
 // =======================================================================
-// Encoder ISRs (channel-A RISING, channel-B gives direction)
+// Encoder ISRs (channel A RISING, channel B gives direction)
 // =======================================================================
 void isrLeftEncoder() {
   if (digitalRead(PIN_L_ENC_B) == LOW) encTicksLeft++;
@@ -95,37 +110,66 @@ void isrRightEncoder() {
 }
 
 // =======================================================================
-// Motor driver
+// Software PWM: Timer2 interrupt, about 31.7 kHz / 64 steps = about 496 Hz
 // =======================================================================
-void setWheelSpeed(uint8_t enPin, uint8_t rpwmPin, uint8_t lpwmPin, int16_t speedMMs) {
-  bool active = i2cLinkEstablished && motorsEnabled;
-  digitalWrite(enPin, active ? HIGH : LOW);
+ISR(TIMER2_COMPA_vect) {
+  swPhase = (swPhase + 1) & (SW_STEPS - 1);
 
-  if (!active || speedMMs == 0) {
-    digitalWrite(rpwmPin, LOW);
-    analogWrite(lpwmPin, 0);
-    return;
-  }
+  if (swPhase < swDutyL) PORTD |=  (1 << PD4);    // pin 4
+  else                   PORTD &= ~(1 << PD4);
 
-  if (speedMMs > 0) {
-    digitalWrite(rpwmPin, HIGH);        // forward: full speed (pin can't PWM)
-    analogWrite(lpwmPin, 0);
-  } else {
-    long mag = constrain((long)abs(speedMMs), 0L, (long)MAX_WHEEL_SPEED_MMS);
-    int pwm = (int)map(mag, 0L, (long)MAX_WHEEL_SPEED_MMS,
-                        (long)MIN_EFFECTIVE_PWM, (long)PWM_MAX);
-    digitalWrite(rpwmPin, LOW);
-    analogWrite(lpwmPin, pwm);
-  }
+  if (swPhase < swDutyR) PORTB |=  (1 << PB4);    // pin 12
+  else                   PORTB &= ~(1 << PB4);
 }
 
+void setupSoftPwmTimer() {
+  TCCR2A = (1 << WGM21);     // CTC mode
+  TCCR2B = (1 << CS21);      // prescaler 8
+  OCR2A  = 62;               // 16 MHz / 8 / 63 = about 31.7 kHz
+  TIMSK2 |= (1 << OCIE2A);   // enable compare-match interrupt
+}
+
+// =======================================================================
+// Motor driver
+// =======================================================================
 void stopAllMotors() {
-  digitalWrite(PIN_L_EN, LOW);
-  digitalWrite(PIN_R_EN, LOW);
-  digitalWrite(PIN_L_RPWM, LOW);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    digitalWrite(PIN_L_EN, LOW);
+    digitalWrite(PIN_R_EN, LOW);
+    swDutyL = 0;
+    swDutyR = 0;
+  }
   analogWrite(PIN_L_LPWM, 0);
-  digitalWrite(PIN_R_RPWM, LOW);
   analogWrite(PIN_R_LPWM, 0);
+}
+
+void driveWheel(uint8_t enPin, uint8_t lpwmPin, bool isLeft, int16_t speedMMs) {
+  bool active = i2cLinkEstablished && motorsEnabled;
+  uint8_t fwdDuty = 0;
+  int bwdPwm = 0;
+
+  if (active && speedMMs != 0) {
+    long mag = constrain((long)abs(speedMMs), 0L, (long)MAX_WHEEL_SPEED_MMS);
+
+    if (speedMMs > 0) {
+      float gain = isLeft ? GAIN_LEFT_FWD : GAIN_RIGHT_FWD;
+      long d = map(mag, 0L, (long)MAX_WHEEL_SPEED_MMS, SW_MIN_DUTY, (long)SW_STEPS);
+      fwdDuty = (uint8_t)constrain((long)(d * gain), 0L, (long)SW_STEPS);
+    } else {
+      float gain = isLeft ? GAIN_LEFT_BWD : GAIN_RIGHT_BWD;
+      long p = map(mag, 0L, (long)MAX_WHEEL_SPEED_MMS,
+                   (long)MIN_EFFECTIVE_PWM, (long)PWM_MAX);
+      bwdPwm = constrain((int)(p * gain), 0, PWM_MAX);
+    }
+  }
+
+  // Keep the shared PORT registers consistent with the ISR.
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    digitalWrite(enPin, active ? HIGH : LOW);
+    if (isLeft) swDutyL = fwdDuty;
+    else        swDutyR = fwdDuty;
+    analogWrite(lpwmPin, bwdPwm);   // backward; 0 when going forward or stopped
+  }
 }
 
 void updateMotors() {
@@ -161,15 +205,12 @@ void updateMotors() {
     tgtRight = targetRightMMs;
   }
 
-  setWheelSpeed(PIN_L_EN, PIN_L_RPWM, PIN_L_LPWM, tgtLeft);
-  setWheelSpeed(PIN_R_EN, PIN_R_RPWM, PIN_R_LPWM, tgtRight);
+  driveWheel(PIN_L_EN, PIN_L_LPWM, true, tgtLeft);
+  driveWheel(PIN_R_EN, PIN_R_LPWM, false, tgtRight);
 }
 
 // =======================================================================
-// I2C callbacks. Both run INSIDE the TWI interrupt:
-//   - keep them short
-//   - NO Serial calls
-//   - NEVER call interrupts()/sei() here
+// I2C callbacks (run inside the TWI interrupt: keep short, no Serial)
 // =======================================================================
 void onI2CReceive(int numBytes) {
   if (numBytes <= 0) return;
@@ -207,8 +248,7 @@ void onI2CReceive(int numBytes) {
 }
 
 void onI2CRequest() {
-  // Other interrupts (encoders) are already masked while we are in this
-  // handler, so these reads are atomic without touching the interrupt flag.
+  // Encoder ISRs are masked while this handler runs, so these reads are safe.
   long curLeft  = encTicksLeft;
   long curRight = encTicksRight;
   long dLeft  = curLeft  - encSnapshotLeft;
@@ -277,7 +317,7 @@ void printDebug() {
       l = encTicksLeft;
       r = encTicksRight;
     }
-    if (l != lastPrintedEncL || r != lastPrintedEncR) {   // only while moving
+    if (l != lastPrintedEncL || r != lastPrintedEncR) {
       lastPrintedEncL = l;
       lastPrintedEncR = r;
       Serial.print("ENC total left=");
@@ -309,12 +349,14 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_L_ENC_A), isrLeftEncoder, RISING);
   attachInterrupt(digitalPinToInterrupt(PIN_R_ENC_A), isrRightEncoder, RISING);
 
+  setupSoftPwmTimer();
+
   Wire.begin(I2C_SLAVE_ADDR);
   Wire.onReceive(onI2CReceive);
   Wire.onRequest(onI2CRequest);
 
   lastControlMs = millis();
-  Serial.println("ARDUINO2_SLAVE_V3_READY (addr 0x08), waiting for I2C...");
+  Serial.println("ARDUINO2_SLAVE_V4_READY (addr 0x08), waiting for I2C...");
 }
 
 void loop() {
