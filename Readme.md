@@ -455,6 +455,162 @@ See the header comments in `arduino1_master.ino` (UART ASCII lines) and
 - The Arduino sketches are named `arduino1.ino` / `arduino2.ino` in `program/main/`, while this README refers to `arduino1_master.ino` / `arduino2_slave.ino`.
 - `display.launch.py` contains a comment that says `cd ~/trinh/ag`. Use `~/ag` instead.
 
+
+### Manual keyboard control with teleop_twist_keyboard
+
+The `teleop_twist_keyboard` package provides manual control using a keyboard. It publishes `geometry_msgs/msg/Twist` messages to `/cmd_vel`.
+
+The same keyboard interface can control the robot in both Gazebo simulation and on the real robot.
+
+#### Keyboard layout
+
+Run the teleoperation node in a terminal:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+Use the following keys to control the robot:
+
+```text
+        u    i    o
+        j    k    l
+        m    ,    .
+
+i : Move forward
+, : Move backward
+j : Rotate left
+l : Rotate right
+k : Stop
+u / o : Forward with left / right rotation
+m / . : Backward with left / right rotation
+```
+
+Speed adjustment:
+
+| Key | Function |
+|---|---|
+| `q` / `z` | Increase / decrease both linear and angular speeds |
+| `w` / `x` | Increase / decrease linear speed |
+| `e` / `c` | Increase / decrease angular speed |
+| `Ctrl+C` | Exit teleoperation |
+
+Keep the teleoperation terminal focused while pressing the movement keys.
+
+#### A. Manual control in Gazebo simulation
+
+1. Start Gazebo:
+
+```bash
+source ~/ag/install/setup.bash
+ros2 launch fullrobotassem gazebo.launch.py
+```
+
+2. In another terminal, start keyboard teleoperation:
+
+```bash
+source ~/ag/install/setup.bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+3. Use the keyboard layout above to move the simulated robot.
+
+For mapping or navigation, use the appropriate launch file and make sure only the intended controller is publishing movement commands to `/cmd_vel`.
+
+#### B. Manual control on the real robot (Raspberry Pi)
+
+The real robot uses `robot_hardware/serial_bridge` to convert ROS 2 velocity commands into the existing Arduino UART protocol.
+
+Control flow:
+
+```text
+Keyboard
+   |
+   v
+teleop_twist_keyboard
+   |
+   | geometry_msgs/msg/Twist
+   v
+/cmd_vel
+   |
+   v
+robot_hardware/serial_bridge
+   |
+   | UART 115200
+   | V <linear_mm_s> <angular_mrad_s>
+   v
+Arduino 1 (Master)
+   |
+   | I2C
+   v
+Arduino 2 (Slave)
+   |
+   v
+Wheel motor drivers
+```
+
+**Terminal 1 – Start the hardware bridge**
+
+```bash
+cd ~/ag
+source /opt/ros/jazzy/setup.bash
+source ~/ag/install/setup.bash
+
+ros2 run robot_hardware serial_bridge
+```
+
+**Terminal 2 – Start keyboard teleoperation**
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ag/install/setup.bash
+
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+**Terminal 3 – Optional: monitor velocity commands**
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ag/install/setup.bash
+
+ros2 topic echo /cmd_vel
+```
+
+Press `i` in Terminal 2 to move forward. The hardware bridge converts the ROS 2 velocity into the Arduino command format.
+
+Example:
+
+| ROS 2 velocity | Arduino UART command |
+|---|---|
+| `linear.x = 0.15`, `angular.z = 0.0` | `V 150 0` |
+| `linear.x = 0.0`, `angular.z = 0.3` | `V 0 300` |
+| `linear.x = 0.1`, `angular.z = 0.2` | `V 100 200` |
+| Both velocities are zero | `V 0 0` |
+
+The bridge currently applies these limits:
+
+| Parameter | Value |
+|---|---:|
+| Maximum linear velocity | 0.2 m/s |
+| Maximum angular velocity | 1.0 rad/s |
+| Serial baud rate | 115200 |
+| Command transmission frequency | 20 Hz |
+| Command timeout | 0.3 seconds |
+
+If no new velocity command arrives within the timeout, the bridge automatically sends `V 0 0` to stop the robot.
+
+**Stopping the robot**
+
+- Press `k` to publish a zero-velocity command.
+- Press `Ctrl+C` to exit keyboard teleoperation.
+- If the teleoperation node stops publishing, the hardware bridge automatically sends zero velocity after the command timeout.
+
+**Important:** Test manual control with the robot wheels safely lifted or motor power disabled before operating it on the ground. Do not run keyboard teleoperation and autonomous Nav2 control simultaneously unless you have explicitly configured a controller-selection or velocity-multiplexing mechanism.
+
+
+
+
 ## Wiring (from `ketnoi.xlsx`)
 
 **Arduino 1 (Master)**
