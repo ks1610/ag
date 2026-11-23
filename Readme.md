@@ -579,6 +579,25 @@ ros2 topic echo /cmd_vel
 
 Press `i` in Terminal 2 to move forward. The hardware bridge converts the ROS 2 velocity into the Arduino command format.
 
+
+```bash
+cd ~/ag
+colcon build --packages-select fullrobotassem --symlink-install
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+source ~/ag/install/setup.bash
+ros2 launch fullrobotassem mapping_all.launch.py
+```
+
+
+```bash
+cd ~/ag
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+source ~/ag/install/setup.bash
+ros2 launch fullrobotassem mapping_all.launch.py
+```
+
 Example:
 
 | ROS 2 velocity | Arduino UART command |
