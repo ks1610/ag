@@ -29,6 +29,11 @@ class SerialBridge(Node):
         self.declare_parameter('max_linear', 0.2)
         self.declare_parameter('max_angular', 1.0)
 
+        # Deadband compensation (values are AFTER speed_scale, in m/s, rad/s).
+        # 0.0 disables the feature.
+        self.declare_parameter('min_linear', 0.0)
+        self.declare_parameter('min_angular', 0.0)
+
         # Speed and wheel balance
         self.declare_parameter('speed_scale', 0.6)
         self.declare_parameter('left_slower_percent', 8.0)
@@ -46,12 +51,16 @@ class SerialBridge(Node):
         self.declare_parameter('base_frame', 'base_footprint')
         self.declare_parameter('odom_topic', '/odom')
 
+        # Read parameters (all declared above)
         self.serial_port = self.get_parameter('serial_port').value
         self.baud_rate = self.get_parameter('baud_rate').value
         self.cmd_vel_topic = self.get_parameter('cmd_vel_topic').value
         self.command_timeout = self.get_parameter('command_timeout').value
         self.max_linear = self.get_parameter('max_linear').value
         self.max_angular = self.get_parameter('max_angular').value
+
+        self.min_linear = float(self.get_parameter('min_linear').value)
+        self.min_angular = float(self.get_parameter('min_angular').value)
 
         self.speed_scale = float(self.get_parameter('speed_scale').value)
         self.left_slower_percent = float(
@@ -88,7 +97,9 @@ class SerialBridge(Node):
             f'Speed scale={self.speed_scale:.2f}, left wheel '
             f'{self.left_slower_percent:.1f}% slower than right, '
             f'track={self.wheel_separation:.3f} m, '
-            f'invert_turn={self.invert_turn}'
+            f'invert_turn={self.invert_turn}, '
+            f'min_linear={self.min_linear:.3f}, '
+            f'min_angular={self.min_angular:.3f}'
         )
 
         self.linear_x = 0.0
@@ -149,7 +160,11 @@ class SerialBridge(Node):
         self.last_command_time = time.monotonic()
 
     def shape_command(self, linear, angular):
-        """Apply the speed reduction and the left/right wheel balance."""
+        """Apply speed reduction, left/right balance and deadband lift."""
+        # Decide from the ORIGINAL command, before balancing adds a
+        # small linear component to pure rotations.
+        in_place = abs(linear) < 1e-3
+
         track = self.wheel_separation
         if track <= 0.0:
             linear *= self.speed_scale
@@ -171,6 +186,16 @@ class SerialBridge(Node):
 
         linear = max(-self.max_linear, min(self.max_linear, linear))
         angular = max(-self.max_angular, min(self.max_angular, angular))
+
+        if in_place:
+            # Rotating in place: lift only the angular part.
+            if 0.0 < abs(angular) < self.min_angular:
+                angular = math.copysign(self.min_angular, angular)
+        else:
+            # Driving: lift only the linear part.
+            if 0.0 < abs(linear) < self.min_linear:
+                linear = math.copysign(self.min_linear, linear)
+
         return linear, angular
 
     def send_serial_command(self):
