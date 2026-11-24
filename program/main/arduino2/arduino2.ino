@@ -1,26 +1,31 @@
-// /*
-//  * arduino2_slave.ino  (v3)
-//  * ---------------------------------------------------------------------
-//  * Role: ARDUINO 2 (Slave), I2C address 0x08. USB used only for debug.
-//  *
-//  * v3 FIXES
-//  *  - onI2CRequest() no longer calls noInterrupts()/interrupts(). That code
-//  *    runs inside the TWI interrupt; calling interrupts() there re-entered
-//  *    the handler recursively and hung the I2C bus (SCL held low).
-//  *  - Watchdog reads lastI2cCmdMs atomically and prints only once.
-//  *  - Debug printing is rate-limited; ENC totals printed for verification.
-//  *
-//  * Motor behaviour is unchanged from the version that moved the robot:
-//  *   Forward  : RPWM pin (D4/D12, not PWM-capable) = digital HIGH (full speed)
-//  *   Backward : LPWM pin (D6/D10, PWM) = analogWrite, floor MIN_EFFECTIVE_PWM
-//  *
-//  * I2C protocol (Arduino1 = master):
-//  *   Write 5 bytes: [0x10, leftMMs_hi, leftMMs_lo, rightMMs_hi, rightMMs_lo]
-//  *   Write 2 bytes: [0x30, enable]
-//  *   Read  8 bytes: [leftTicks(int32 BE), rightTicks(int32 BE)] = delta since
-//  *                  the previous read (counters advance on every read).
-//  * ---------------------------------------------------------------------
-//  */
+/*
+ * arduino2_slave.ino  (v5, closed-loop wheel speed)
+ * ---------------------------------------------------------------------
+ * Role: ARDUINO 2 (Slave), I2C address 0x08. USB used only for debug.
+ *
+ * v5 CHANGES
+ *  - The wheel speed command (mm/s) is now regulated with a feedforward +
+ *    PI loop using the encoders. The old fixed minimum PWM (110) is gone,
+ *    so slow commands produce slow motion instead of ~0.12 m/s.
+ *  - Commands below MIN_TARGET_MMS are treated as zero (they are below
+ *    what the motors can do and would only cause stick-slip).
+ *  - Separate mm-per-tick per wheel, so a veer can be trimmed here.
+ *  - Output is capped by PWM_LIMIT as a safety if an encoder sign is wrong.
+ *
+ * Kept from v3: no noInterrupts()/interrupts() inside the I2C handlers,
+ * atomic watchdog read, rate-limited debug printing.
+ *
+ * Motor outputs (unchanged wiring):
+ *   Forward  : RPWM pin (D4/D12) = software PWM from the Timer2 ISR
+ *   Backward : LPWM pin (D6/D10) = analogWrite
+ *
+ * I2C protocol (Arduino1 = master):
+ *   Write 5 bytes: [0x10, leftMMs_hi, leftMMs_lo, rightMMs_hi, rightMMs_lo]
+ *   Write 2 bytes: [0x30, enable]
+ *   Read  8 bytes: [leftTicks(int32 BE), rightTicks(int32 BE)] = delta since
+ *                  the previous read (counters advance on every read).
+ * ---------------------------------------------------------------------
+ */
 
 #include <Wire.h>
 #include <util/atomic.h>
@@ -43,23 +48,40 @@ static const uint8_t PIN_R_ENC_A = 3;    // INT1
 static const uint8_t PIN_R_ENC_B = 8;
 
 static const float MAX_WHEEL_SPEED_MMS = 400.0f;
-static const int   PWM_MAX           = 255;
-static const int   MIN_EFFECTIVE_PWM = 110;   // 0-255 scale, used for both directions
+static const int   PWM_MAX             = 255;
 
 // Software PWM for forward: 64 steps at about 496 Hz.
-static const uint8_t SW_STEPS    = 64;
-static const long    SW_MIN_DUTY = MIN_EFFECTIVE_PWM / 4;   // same starting point as backward
+static const uint8_t SW_STEPS = 64;
 
-// Per-wheel, per-direction gains (1.0 = no change). Use these to correct drift.
-static const float GAIN_LEFT_FWD  = 1.00f;
-static const float GAIN_RIGHT_FWD = 1.00f;
-static const float GAIN_LEFT_BWD  = 1.00f;
-static const float GAIN_RIGHT_BWD = 1.00f;
+// ---- Closed-loop wheel speed ----------------------------------------
+// 2 * pi * 30 mm wheel radius / 1342.5 ticks per rev = 0.1404 mm per tick.
+// If the robot veers after the Pi's LEFT_SLOWER_PERCENT is set to 0:
+//   veers toward the LEFT  -> lower MM_PER_TICK_LEFT slightly (e.g. 0.1404 -> 0.136)
+//   veers toward the RIGHT -> lower MM_PER_TICK_RIGHT slightly
+static const float MM_PER_TICK_LEFT  = 0.1404f;
+static const float MM_PER_TICK_RIGHT = 0.1404f;
+
+// Encoder direction: +1 if positive ticks mean the wheel moves forward.
+// From the logs: left counts up going forward, right counts DOWN going forward.
+static const int ENC_SIGN_LEFT  = 1;
+static const int ENC_SIGN_RIGHT = -1;
+
+static const float KP        = 0.30f;   // PWM per mm/s of error
+static const float KI        = 2.0f;    // PWM per (mm/s * s)
+static const float FF_OFFSET = 60.0f;   // feedforward start (PWM units)
+static const float FF_SLOPE  = 0.5f;    // feedforward PWM per mm/s
+static const float INTEG_MIN = -60.0f;
+static const float INTEG_MAX = 120.0f;
+static const int   PWM_LIMIT = 220;     // safety cap (max 255)
+
+static const int   MIN_TARGET_MMS = 10; // |target| below this is treated as 0
+static const float SPEED_FILTER   = 0.4f;
 
 static const unsigned long CONTROL_PERIOD_MS   = 20;
 static const unsigned long CMD_TIMEOUT_MS      = 500;
 static const unsigned long DEBUG_MIN_PERIOD_MS = 1000;
 static const unsigned long ENC_PRINT_PERIOD_MS = 500;
+static const unsigned long CTL_PRINT_PERIOD_MS = 500;
 
 // =======================================================================
 // State
@@ -92,9 +114,20 @@ volatile uint8_t debugNumBytes    = 0;
 unsigned long lastControlMs = 0;
 unsigned long lastDebugPrintMs = 0;
 unsigned long lastEncPrintMs = 0;
+unsigned long lastCtlPrintMs = 0;
 int16_t lastPrintedLeft = 0, lastPrintedRight = 0;
 long lastPrintedEncL = 0, lastPrintedEncR = 0;
 bool watchdogTripped = false;
+
+// Per-wheel controller state
+struct WheelCtl {
+  long   prevTicks;
+  float  speed;      // filtered measured speed, mm/s, + = forward
+  float  integ;      // integral term, PWM units
+  int8_t lastSign;   // direction of the last nonzero target
+};
+WheelCtl ctlL = {0, 0.0f, 0.0f, 0};
+WheelCtl ctlR = {0, 0.0f, 0.0f, 0};
 
 // =======================================================================
 // Encoder ISRs (channel A RISING, channel B gives direction)
@@ -143,29 +176,69 @@ void stopAllMotors() {
   analogWrite(PIN_R_LPWM, 0);
 }
 
-void driveWheel(uint8_t enPin, uint8_t lpwmPin, bool isLeft, int16_t speedMMs) {
-  bool active = i2cLinkEstablished && motorsEnabled;
+void resetCtl(WheelCtl &c, long ticks) {
+  c.prevTicks = ticks;
+  c.speed = 0.0f;
+  c.integ = 0.0f;
+  c.lastSign = 0;
+}
+
+// Updates the measured speed and returns a PWM magnitude (0..PWM_LIMIT)
+// for the commanded direction. Returns 0 when the target is (near) zero.
+int computePwm(WheelCtl &c, long ticksNow, int encSign, float mmPerTick,
+               int16_t targetMMs, float dt) {
+  long d = ticksNow - c.prevTicks;
+  c.prevTicks = ticksNow;
+
+  float meas = (float)encSign * (float)d * mmPerTick / dt;
+  c.speed += SPEED_FILTER * (meas - c.speed);
+
+  if (abs(targetMMs) < MIN_TARGET_MMS) {
+    c.integ = 0.0f;
+    c.lastSign = 0;
+    return 0;
+  }
+
+  int8_t sgn = (targetMMs > 0) ? 1 : -1;
+  if (sgn != c.lastSign) {          // direction change: restart the integral
+    c.integ = 0.0f;
+    c.lastSign = sgn;
+  }
+
+  float tgt = fabsf((float)constrain((long)targetMMs,
+                                     -(long)MAX_WHEEL_SPEED_MMS,
+                                     (long)MAX_WHEEL_SPEED_MMS));
+  float spd = (sgn > 0) ? c.speed : -c.speed;  // speed along the commanded direction
+  float err = tgt - spd;
+
+  float out = FF_OFFSET + FF_SLOPE * tgt + KP * err + c.integ;
+
+  // Anti-windup: do not integrate further into a saturated output.
+  bool satHigh = (out >= PWM_LIMIT) && (err > 0.0f);
+  bool satLow  = (out <= 0.0f)      && (err < 0.0f);
+  if (!satHigh && !satLow) {
+    c.integ += err * KI * dt;
+    c.integ = constrain(c.integ, INTEG_MIN, INTEG_MAX);
+    out = FF_OFFSET + FF_SLOPE * tgt + KP * err + c.integ;
+  }
+
+  return (int)constrain(out, 0.0f, (float)PWM_LIMIT);
+}
+
+void driveWheelPwm(uint8_t enPin, uint8_t lpwmPin, bool isLeft,
+                   int16_t speedMMs, int pwm) {
+  bool enabled = i2cLinkEstablished && motorsEnabled;
   uint8_t fwdDuty = 0;
   int bwdPwm = 0;
 
-  if (active && speedMMs != 0) {
-    long mag = constrain((long)abs(speedMMs), 0L, (long)MAX_WHEEL_SPEED_MMS);
-
-    if (speedMMs > 0) {
-      float gain = isLeft ? GAIN_LEFT_FWD : GAIN_RIGHT_FWD;
-      long d = map(mag, 0L, (long)MAX_WHEEL_SPEED_MMS, SW_MIN_DUTY, (long)SW_STEPS);
-      fwdDuty = (uint8_t)constrain((long)(d * gain), 0L, (long)SW_STEPS);
-    } else {
-      float gain = isLeft ? GAIN_LEFT_BWD : GAIN_RIGHT_BWD;
-      long p = map(mag, 0L, (long)MAX_WHEEL_SPEED_MMS,
-                   (long)MIN_EFFECTIVE_PWM, (long)PWM_MAX);
-      bwdPwm = constrain((int)(p * gain), 0, PWM_MAX);
-    }
+  if (enabled && abs(speedMMs) >= MIN_TARGET_MMS) {
+    if (speedMMs > 0) fwdDuty = (uint8_t)constrain((pwm * SW_STEPS) / 255, 0, SW_STEPS);
+    else              bwdPwm  = constrain(pwm, 0, PWM_MAX);
   }
 
   // Keep the shared PORT registers consistent with the ISR.
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    digitalWrite(enPin, active ? HIGH : LOW);
+    digitalWrite(enPin, enabled ? HIGH : LOW);
     if (isLeft) swDutyL = fwdDuty;
     else        swDutyR = fwdDuty;
     analogWrite(lpwmPin, bwdPwm);   // backward; 0 when going forward or stopped
@@ -174,11 +247,22 @@ void driveWheel(uint8_t enPin, uint8_t lpwmPin, bool isLeft, int16_t speedMMs) {
 
 void updateMotors() {
   unsigned long now = millis();
-  if (now - lastControlMs < CONTROL_PERIOD_MS) return;
+  unsigned long elapsed = now - lastControlMs;
+  if (elapsed < CONTROL_PERIOD_MS) return;
   lastControlMs = now;
+  float dt = elapsed / 1000.0f;
+  if (dt <= 0.0f) return;
+
+  long ticksL, ticksR;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    ticksL = encTicksLeft;
+    ticksR = encTicksRight;
+  }
 
   if (!i2cLinkEstablished) {
     stopAllMotors();
+    resetCtl(ctlL, ticksL);
+    resetCtl(ctlR, ticksR);
     return;
   }
 
@@ -205,8 +289,22 @@ void updateMotors() {
     tgtRight = targetRightMMs;
   }
 
-  driveWheel(PIN_L_EN, PIN_L_LPWM, true, tgtLeft);
-  driveWheel(PIN_R_EN, PIN_R_LPWM, false, tgtRight);
+  int pwmL = computePwm(ctlL, ticksL, ENC_SIGN_LEFT,  MM_PER_TICK_LEFT,  tgtLeft,  dt);
+  int pwmR = computePwm(ctlR, ticksR, ENC_SIGN_RIGHT, MM_PER_TICK_RIGHT, tgtRight, dt);
+
+  driveWheelPwm(PIN_L_EN, PIN_L_LPWM, true,  tgtLeft,  pwmL);
+  driveWheelPwm(PIN_R_EN, PIN_R_LPWM, false, tgtRight, pwmR);
+
+  // Controller debug (only while a wheel command is active).
+  if ((tgtLeft != 0 || tgtRight != 0) && now - lastCtlPrintMs >= CTL_PRINT_PERIOD_MS) {
+    lastCtlPrintMs = now;
+    Serial.print("CTL tgt L="); Serial.print(tgtLeft);
+    Serial.print(" R=");        Serial.print(tgtRight);
+    Serial.print(" meas L=");   Serial.print(ctlL.speed, 0);
+    Serial.print(" R=");        Serial.print(ctlR.speed, 0);
+    Serial.print(" pwm L=");    Serial.print(pwmL);
+    Serial.print(" R=");        Serial.println(pwmR);
+  }
 }
 
 // =======================================================================
@@ -356,7 +454,7 @@ void setup() {
   Wire.onRequest(onI2CRequest);
 
   lastControlMs = millis();
-  Serial.println("ARDUINO2_SLAVE_V4_READY (addr 0x08), waiting for I2C...");
+  Serial.println("ARDUINO2_SLAVE_V5_CLOSED_LOOP_READY (addr 0x08), waiting for I2C...");
 }
 
 void loop() {
