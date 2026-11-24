@@ -26,12 +26,14 @@ WHEEL_SEPARATION = 0.243
 
 # 1.0 so that Nav2's velocity limits are the real limits.
 SPEED_SCALE = 1.0
-LEFT_SLOWER_PERCENT = 28.0
+# LEFT_SLOWER_PERCENT = 28.0
+LEFT_SLOWER_PERCENT = 0.0
+
 
 # Deadband compensation (m/s and rad/s, after scaling).
 # PLACEHOLDERS: measure the lowest speeds that reliably move the robot.
-MIN_LINEAR = 0.05
-MIN_ANGULAR = 0.25
+MIN_LINEAR = 0.0
+MIN_ANGULAR = 0.0
 
 
 def generate_launch_description():
