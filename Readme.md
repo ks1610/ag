@@ -598,6 +598,22 @@ source ~/ag/install/setup.bash
 ros2 launch fullrobotassem mapping_all.launch.py
 ```
 
+```bash
+cd ~/ag
+
+ros2 run nav2_map_server map_saver_cli \
+  -f ~/ag/maps/my_map \
+  --ros-args -p save_map_timeout:=10.0
+```
+
+```bash
+cd ~/ros2_ws
+colcon build --packages-select ldlidar_sl_ros2
+source install/setup.bash
+ros2 launch ldlidar_sl_ros2 ld14.launch.py
+```
+
+
 Example:
 
 | ROS 2 velocity | Arduino UART command |
