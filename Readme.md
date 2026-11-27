@@ -644,6 +644,13 @@ If no new velocity command arrives within the timeout, the bridge automatically 
 **Important:** Test manual control with the robot wheels safely lifted or motor power disabled before operating it on the ground. Do not run keyboard teleoperation and autonomous Nav2 control simultaneously unless you have explicitly configured a controller-selection or velocity-multiplexing mechanism.
 
 
+```bash
+cd ~/ag
+source ~/ros2_ws/install/setup.bash
+source ~/ag/install/setup.bash
+ros2 launch fullrobotassem navigation_real.launch.py
+```
+
 
 
 ## Wiring (from `ketnoi.xlsx`)
